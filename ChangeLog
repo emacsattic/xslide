@@ -1,3 +1,26 @@
+2003-08-04  Glen Peterson <glen@organicdesign.org>
+
+	* xslide.el: Updated version to 0.2.3.
+
+	* xslide.el: Replaced xsl-element-indent-step with xsl-tab-width.
+	Added appropriate documentation and ensured backward
+	compatibility.
+
+	* xslide.el: Revamped xsl-indent-tabs-mode to make it really work.
+
+	* xslide.el: "pretty-print" indented `xsl-if-to-choose' (it was
+	C-style).
+
+	* xslide.el: "pretty-print" indented `xsl-mode' and modified it to
+	make xsl-tab-width and xsl-indent-tabs-mode more robust.
+
+	* xslide.el: Tried a new approach for
+	`font-lock-mark-block-function' and `mail-position-on-field'
+	causing compilation errors on my XEmacs.  Even though this means I
+	can't use these features, it allows me to compile and use xslide
+	at all (formerly, I commented these lines out manually before
+	compiling).
+
 2003-08-04  Tony Graham  <tonygraham@users.sourceforge.net>
 
 	* === Released 0.2.2 ===.
