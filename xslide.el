@@ -78,7 +78,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Version information
 
-(defconst xslide-version "0.2"
+(defconst xslide-version "0.2.1"
   "Version number of xslide XSL mode.")
 
 (defun xslide-version ()

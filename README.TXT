@@ -1,5 +1,5 @@
 This package contains an Emacs major mode for editing XSL stylesheets.
-The current revision is 0.2, dated 27 August, 2001.
+The current revision is 0.2.1, dated 26 May 2003.
 
 The xslide home page is http://www.menteith.com/xslide/
 
@@ -11,7 +11,9 @@ http://www.sourceforge.net/projects/xslide/.
 File                    Contents
 
 README.TXT              The file you are reading
-changelog.txt           Record of changes made to xslide elisp files
+ChangeLog		Log of changes since xslide 0.2
+NEWS			Summary of what's new or changed about xslide
+TODO			List of sample things to do next
 dot_emacs               Some things for your .emacs file
 xslide.el               Base file for the XSL major mode
 xslide-abbrev.el        Abbreviations for XSL mode
@@ -22,7 +24,7 @@ xslide-process.el       Procedures for processing XSL stylesheets
 makefile                Makefile for byte-compiling 
 
 Note that make-regexp.el, which was used by earlier version of xslide,
-is not required by xslide 0.2.
+is not required by xslide 0.2 or later.
 
 Note that "xslide" is pronounced as one word, similar to "slide".  It
 is not spelled out as "x-s-l-i-d-e".
@@ -58,13 +60,22 @@ is not spelled out as "x-s-l-i-d-e".
 
  - Comprehensive abbreviations table to further ease typing.
 
-xsl-mode was tested using NTEmacs 20.7.1.
+xsl-mode was tested using Emacs 20.7.1.
 
 
 * BUG REPORTS/ENCHANCEMENTS
 
 I would be glad to accept bug reports and, especially, enhancements.
 Use `xsl-submit-bug-report' for bug reports.
+
+Bug reports and enhancement requests can also be logged on the
+SourceForge site.
+
+
+* MAILING LIST
+
+xslide-list@lists.sourceforge.net is the xslide mailing list.  See
+https://lists.sourceforge.net/lists/listinfo/xslide-list/.
 
 
 * INSTALLATION
