@@ -54,6 +54,7 @@
     (error nil)))
 ;; Need etags for `find-tag-default'
 (require 'etags)
+(require 'speedbar)
 
 (require 'xslide-data "xslide-data")
 (require 'xslide-abbrev "xslide-abbrev")
@@ -79,6 +80,7 @@
 
 (defgroup xsl-faces nil
   "Font faces used in XSL mode."
+  :prefix "xsl-"
   :group 'xsl
   :group 'faces)
 
@@ -89,7 +91,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Version information
 
-(defconst xslide-version "0.2.2"
+(defconst xslide-version "0.2.3"
   "Version number of xslide XSL mode.")
 
 (defun xslide-version ()
@@ -101,8 +103,67 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Variables
 
-(defvar xsl-indent-tabs-mode nil
-  "*Initial value of indent-tabs-mode on entering `xsl-mode'.")
+(defcustom xsl-tab-width 2
+  "Sets the indentation step size on entering xsl-mode.
+
+You must run \"M-x xsl-mode\" (or just reload your xsl file) before
+changing this variable will take effect.
+
+If undefined, this variable will inherit its value from tab-width (or
+from xsl-element-indent-step for backward compatibility if it is
+defined).
+
+If `xsl-indent-tabs-mode' is Spaces (nil), this controls the number of
+spaces to insert for each indentation level.
+
+If `xsl-indent-tabs-mode' is Tabs (t), this controls the width of the
+tab stops for this buffer.
+
+Consider using the same setting for this variable as those you work
+with - regardless of your personal preference.
+
+If you defined `xsl-element-indent-step' in your dot emacs file (for
+an older version of xslide), please remove it since it is no longer
+used (since 0.2.3).  Use xsl-tab-width instead."
+
+  :type '(choice (const :tag "nil" nil)
+                 (integer))
+  :group 'xsl)
+
+(defcustom xsl-indent-tabs-mode nil
+  "Whether to indent using tabs or spaces.
+
+You must run \"M-x xsl-mode\" (or just reload your xsl file) before
+changing this variable will take effect.
+
+To summarize:
+  1.) Files indented with spaces will always look the same on every
+      machine.  This feature is the main argument for using spaces.
+
+  2.) Files indented with tabs will show up with each users preferred
+      tab width on their machine if they have xsl-indent-tabs-mode set
+      to Tabs (t).  This feature and a slightly reduced file size are
+      the main arguments for using tabs.
+
+  3.) For files indented with tabs and spaces, it's best to convert
+      all the tabs to spaces.  Then (if desired) convert the spaces to
+      tabs.  If you want to edit a file of this type and make minimal
+      changes it is probably best to set xsl-indent-tabs-mode to
+      Spaces (nil) and adjust xsl-tab-width until it matches the
+      author's tab-width (8 is a common default).  Issue
+      \"M-x xsl-mode\" to make your new settings take effect.  You
+      will need to use the space key to do indentation in this case.
+
+Consider using the same setting for this variable as those you work
+with - regardless of your personal preference.
+
+If `xsl-indent-tabs-mode' is Tabs (t), xslide makes a buffer-local
+copy of tab-stop-list based on xsl-tab-width.  Your global
+tab-stop-list will be ignored."
+
+  :type '(choice (const :tag "Spaces" nil)
+                 (const :tag "Tabs" t))
+  :group 'xsl)
 
 (defvar xsl-default-filespec "*.xsl"
   "*Initial prompt value for `xsl-etags''s FILESPEC argument.")
@@ -150,11 +211,6 @@
 If non-nil, attributes will be aligned with the space after the
 element name, otherwise by two spaces."
   :type '(choice (const :tag "Yes" t) (const :tag "No" nil))
-  :group 'xsl)
-
-(defcustom xsl-element-indent-step 2
-  "*Amount by which to indent success levels of nested elements."
-  :type '(integer)
   :group 'xsl)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -244,7 +300,7 @@ lines above and below COMMENT in the manner of `xsl-big-comment'."
   (define-key xsl-mode-map "\C-c\C-t"     'xsl-if-to-choose)
 ;;  (define-key xsl-mode-map [(control m)]	  'xsl-electric-return)
 ;;  (define-key xsl-mode-map \10	  'xsl-electric-return)
-  (define-key xsl-mode-map "\177"	  'backward-delete-char-untabify)
+  (define-key xsl-mode-map "\177"	  'xsl-delete)
 ;;  (define-key xsl-mode-map "\M-\C-e" 'xsl-next-rule)
 ;;  (define-key xsl-mode-map "\M-\C-a" 'xsl-previous-rule)
 ;;  (define-key xsl-mode-map "\M-\C-h" 'mark-xsl-rule)
@@ -254,11 +310,11 @@ lines above and below COMMENT in the manner of `xsl-big-comment'."
 "Converts <xsl:if> to <xsl:choose>.  Works on a single 'ifs' or on a region.
 So:
 
-<xsl:if test=\"isFive = 5\"><p>It's five!</p></xsl:if>
+<xsl:if test=\"$isFive = 5\"><p>It's five!</p></xsl:if>
 
 Becomes:
 <xsl:choose>
-   <xsl:when test=\"isFive = 5\"><p>It's five!</p></xsl:when>
+   <xsl:when test=\"$isFive = 5\"><p>It's five!</p></xsl:when>
    <xsl:otherwise></xsl:otherwise>
 </xsl:choose>
 
@@ -269,62 +325,40 @@ choose by deleting the appropriate lines after executing this command.
 
 Bound to C-c C-t by default."
   (interactive)
-  (let
-    (
-      (single-if (not (mark)))
-      (the-start (point))
-      (the-end (if (mark) (mark) (point)))
-    )
+  (let ( (single-if (not (mark)))
+         (the-start (point))
+         (the-end (if (mark) (mark) (point))))
     (if (and (not (null (mark)))
              (< (mark) (point)))
-      (progn
-        (exchange-point-and-mark)
-        (setq the-start (point))
-        (setq the-end (mark))
-      )
-    )
+        (progn (exchange-point-and-mark)
+               (setq the-start (point))
+               (setq the-end (mark))))
     (save-excursion
       (if single-if
-        (progn
-          (search-backward "<" nil t)
-;          (message "xsl-if-to-choose: single if mode")
-          (xsl-convert-if-to-choose-slave)
-        )
+        (progn (search-backward "<" nil t)
+;               (message "xsl-if-to-choose: single if mode")
+               (xsl-convert-if-to-choose-slave))
         (save-excursion
-;          (message
-;            (concat "xsl-if-to-choose: Region mode: "
-;                    (int-to-string the-start)
-;                    " "
-;                    (int-to-string the-end)
-;            )
-;          )
+;          (message (concat "xsl-if-to-choose: Region mode: "
+;                           (int-to-string the-start)
+;                           " "
+;                           (int-to-string the-end)))
           (goto-char the-end)
           (if (save-excursion (search-backward "<xsl:if" the-start t))
-            (while (search-backward "<xsl:if" the-start t)
-              (xsl-convert-if-to-choose-slave)
-            )
-            (message "xsl-if-to-choose error: There's no <xsl:if> within the selected region.")            
-          )
-        )
-      )
-    )
-  )
-)
+              (while (search-backward "<xsl:if" the-start t)
+                (xsl-convert-if-to-choose-slave))
+              (message "xsl-if-to-choose error: There's no <xsl:if> within the selected region.")))))))
 
 (defun xsl-convert-if-to-choose-slave ()
   (if (looking-at "<xsl:if")
-    (let
-      ( (start (save-excursion (beginning-of-line) (point))) )      
-      (delete-char 7)
-      (insert "<xsl:choose>\n<xsl:when")
-      (search-forward "</xsl:if>" nil t)
-      (backward-delete-char 9)
-      (insert "</xsl:when>\n<xsl:otherwise></xsl:otherwise>\n</xsl:choose>")
-      (indent-region start (point) nil)
-    )
-      (message "xsl-if-to-choose error: point is not within the start tag of an <xsl:if>.")
-  )
-)
+      (let ( (start (save-excursion (beginning-of-line) (point))) )
+        (delete-char 7)
+        (insert "<xsl:choose>\n<xsl:when")
+        (search-forward "</xsl:if>" nil t)
+        (backward-delete-char 9)
+        (insert "</xsl:when>\n<xsl:otherwise></xsl:otherwise>\n</xsl:choose>")
+        (indent-region start (point) nil))
+    (message "xsl-if-to-choose error: point is not within the start tag of an <xsl:if>.")))
 
 (defun xsl-electric-greater-than (arg)
   "Insert a \">\" and, optionally, insert a matching end-tag.
@@ -380,6 +414,13 @@ current line."
   (if (looking-at "\\([\"/})]\\|$\\)")
       (save-excursion
 	(insert "'"))))
+
+(defun xsl-delete ()
+  "Function called when <delete> is pressed in XSL mode."
+  (interactive)
+  (if xsl-indent-tabs-mode
+      'backward-delete-char
+    'backward-delete-char-untabify))
 
 (defun xsl-electric-quote ()
   "Function called when '\"' is pressed in XSL mode."
@@ -498,7 +539,7 @@ current line."
     (beginning-of-line)
     (delete-horizontal-space)
     (if (looking-at "</")
-	(indent-to (max 0 (- (xsl-calculate-indent) xsl-element-indent-step)))
+	(indent-to (max 0 (- (xsl-calculate-indent) xsl-tab-width)))
       (indent-to (xsl-calculate-indent))))
   (if (and
        (bolp)
@@ -564,11 +605,11 @@ current line."
  	      (re-search-forward (concat meta ">[ \t]*\n") limit t)))
  	(current-column))
        ;; closed open tag followed by new line, or an opening meta tag
-       ;; => indent by xsl-element-indent-step
+       ;; => indent by xsl-tab-width
        ((save-excursion
  	  (or (re-search-forward (concat element ">[ \t]*\n") limit t)
  	      (re-search-forward (concat meta "\\[[ \t]*\n") limit t)))
- 	(+ (current-column) xsl-element-indent-step))
+ 	(+ (current-column) xsl-tab-width))
        ;; incomplete open tag or open meta => indent after tag name
        ((save-excursion
  	  (and (or (re-search-forward (concat element "[ \t\n]*") limit t)
@@ -577,7 +618,7 @@ current line."
  	(if xsl-indent-attributes
  	    (progn (goto-char (match-end 1))
  		   (+ (current-column) 1))
- 	  (+ (current-column) xsl-element-indent-step)))
+ 	  (+ (current-column) xsl-tab-width)))
        ;; incomplete attribute value => indent to string start
        ((save-excursion
  	  (and (or (re-search-forward (concat element "[ \t\n]+" oattval)
@@ -588,9 +629,9 @@ current line."
        ;; beginning of buffer => stay put (beginning of line)
        ((bobp)
  	(current-column))
-       ;; otherwise => indent by xsl-element-indent-step
+       ;; otherwise => indent by xsl-tab-width
        (t
- 	(+ (current-column) xsl-element-indent-step))))))
+ 	(+ (current-column) xsl-tab-width))))))
 
 (defun xsl-complete ()
   "Complete the tag or attribute before point.
@@ -1048,17 +1089,18 @@ the prompts.
   (use-local-map xsl-mode-map)
   (setq mode-name "XSL")
   (setq major-mode 'xsl-mode)
+  (speedbar-add-supported-extension (list ".xsl" ".fo"))
   (setq local-abbrev-table xsl-mode-abbrev-table)
   ;; XEmacs users don't all have imenu
   (if (featurep 'imenu)
       (progn
-	;; If you don't have imenu, you'll get a "free variable"
-	;; warning for imenu-create-index-function when you
-	;; byte-compile, but not having imenu won't cause problems
-	;; when you use xslide
-	(setq imenu-create-index-function 'xsl-imenu-create-index-function)
-	(setq imenu-extract-index-name-function 'xsl-imenu-create-index-function)
-	(imenu-add-to-menubar "Templates")))
+        ;; If you don't have imenu, you'll get a "free variable"
+        ;; warning for imenu-create-index-function when you
+        ;; byte-compile, but not having imenu won't cause problems
+        ;; when you use xslide
+        (setq imenu-create-index-function 'xsl-imenu-create-index-function)
+        (setq imenu-extract-index-name-function 'xsl-imenu-create-index-function)
+        (imenu-add-to-menubar "Templates")))
   ;; comment stuff
 ;;  (make-local-variable 'comment-column)
 ;;  (setq comment-column 32)
@@ -1077,11 +1119,10 @@ the prompts.
 ;;  (xsl-font-make-faces)
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults '(xsl-font-lock-keywords t))
-  (if (xsl-fsfemacs-p)
-      (progn
-	(make-local-variable 'font-lock-mark-block-function)
-	(setq font-lock-mark-block-function
-	      'xsl-font-lock-mark-block-function)))
+  (eval-and-compile
+    ; XEmacs users might not have this function.
+    (make-variable-buffer-local 'font-lock-mark-block-function))
+  (setq font-lock-mark-block-function 'xsl-font-lock-mark-block-function)
   (make-local-variable 'indent-line-function)
   (setq indent-line-function `xsl-electric-tab)
 ;;  (make-local-variable 'font-lock-defaults)
@@ -1097,14 +1138,103 @@ the prompts.
 ;;	      compilation-error-regexp-alist))
 
   (set-syntax-table xsl-mode-syntax-table)
-  ;; Maybe insert space characters when user hits "Tab" key
+
+  ; define xsl-element-indent-step if necessary for backward
+  ; compatibility (pre version 0.2.2)
+  (eval-and-compile
+    (if (assoc 'xsl-element-indent-step (buffer-local-variables))
+        nil ; it's defined: do nothing
+      (make-variable-buffer-local 'xsl-element-indent-step)
+      (setq xsl-element-indent-step nil)))
+
+  ; NOTES ON INDENT-TO: (an epic comment by Glen Peterson)
+  ; ======================================================
+  ; indent-tabs-mode: if nil, spaces only.
+  ;                   if t, indent-line converts tab-width groups of
+  ;                   spaces to tabs.
+  ; tab-width: controls how many spaces to convert to a tab, or how
+  ;            many spaces to insert for each indentation step.
+  ; tab-stops-list: controls how tabs actually display on the screen.
+  ;
+  ; Spaces mode just works.  In tabs-mode, if tab-stops-list and
+  ; tab-width do not match it will indent one way and display another
+  ; creating a mess.  We will avoid this by calculating tab-stop-list
+  ; to be in multiples of tab-width (Tony Grahm's excellent idea).
+  ;
+  ; Sometimes, files are indented with a combination of tabs and
+  ; spaces - usually because the author's tab-width is not the same as
+  ; the indent-step width.  Althought these files are more challenging
+  ; to display than ones using pure spaces or pure tabs, a user can
+  ; still display these files as the author saw them by viewing them
+  ; in spaces-mode with the same tab-width setting as the author (the
+  ; user must figure this out, but it's usually 8)
+  ; 
+  ; Since many editors make a mess of displaying files with mixed tabs
+  ; and spaces, we will endeavor not to create any xsl files of that
+  ; sort.  Users who are particular about indentation will want to
+  ; convert existing files to all tabs or all spaces anyway.  In
+  ; spaces mode, we must indent using only spaces so that the file is
+  ; guaranteed to look the same on all machines.  In tabs mode, we
+  ; should try to indent using only tabs so that the file will appear
+  ; indented using the viewer's preferred indentation step size.
+  ;
+  ; The one xsl exception to using tabs exclusively in tabs mode is
+  ; for indenting attributes in multi-line tags.  In order for
+  ; pretty-print indented attributes to look right in tabs-mode
+  ; regardless of tab-width we must:
+  ;
+  ; - indent to the proper indentation depth of the element using tabs
+  ;
+  ; - indent from the start of the element to the start of the
+  ;   attribute using spaces.
+  ;
+  ; - indent subsequent lines using only tabs
+  ;
+  ; For example:
+  ;
+  ; tab<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  ; tab................version="1.0"
+  ; tab................xmlns:java="http://xml.apache.org/xslt/java">
+  ; tabtab<xsl:output method="html" />
+  ;
+  ; For simplicity, we could indent attributes by two indentation
+  ; steps instead of pretty-printing them below the first attribute.
+  ; For now, I have ignored this issue altogether since it could be
+  ; done manually by tabbers the few times they use multiple lines for
+  ; long tags.
+
+  ; If xsl-tab-width is defined we're set.
+  ; If it's not, and xsl-element-indent-step is, use that for backward
+  ;   compatibility
+  ; If neither is defined, use tab-width
+  (cond ( xsl-tab-width ) ; use as is
+        ( (integerp xsl-element-indent-step)
+          (setq xsl-tab-width xsl-element-indent-step))
+        (t (setq xsl-tab-width tab-width)))
+
+  ; Set to xsl- equivalants (for indent-to)
   (setq indent-tabs-mode xsl-indent-tabs-mode)
-  (if (and
-       xsl-initial-stylesheet-file
-       (eq (point-min) (point-max)))
+  (setq tab-width xsl-tab-width)
+
+  ; If we're in tabs-mode, create a buffer-local tab-stop-list that
+  ; will work properly with our desired xsl-tab-width.
+  (if xsl-indent-tabs-mode
       (progn
-	(insert-file-contents xsl-initial-stylesheet-file)
-	(goto-char xsl-initial-stylesheet-initial-point)))
+        (make-variable-buffer-local 'tab-stop-list)
+        (setq tab-stop-list (let ( (idx 1)
+                                   (tsl ()))
+                              (while (< idx 70)
+                                (setq idx (+ idx xsl-tab-width))
+                                (setq tsl (append tsl (list idx))))
+                              tsl))))
+
+  ; Load stylesheet template if one is present and we have an empty
+  ; buffer.
+  (if (and xsl-initial-stylesheet-file
+           (eq (point-min) (point-max)))
+      (progn
+        (insert-file-contents xsl-initial-stylesheet-file)
+        (goto-char xsl-initial-stylesheet-initial-point)))
   (run-hooks 'xsl-mode-hook))
 
 
@@ -1119,12 +1249,20 @@ the prompts.
 	xslide-maintainer-address
 	(concat "xslide.el " xslide-version)
 	(list
+	 ; Need to find a way to automatically insert all of the
+	 ; xslide-specific variables here.
 	 )
 	nil
 	nil
      "Please change the Subject header to a concise bug description.\nRemember to cover the basics, that is, what you expected to\nhappen and what in fact did happen.  Please remove these\ninstructions from your message.")
     (save-excursion
       (goto-char (point-min))
+      ; XEmacs users may not have this function, so define it just to
+      ; avoid compilation errors.
+      (eval-and-compile
+        (if (not (functionp 'mail-position-on-field))
+            (defun mail-position-on-field (arg)
+              (message "Cannot send mail: lisp function mail-position-on-field is undefined"))))
       (mail-position-on-field "Subject")
       (beginning-of-line)
       (delete-region (point) (progn (forward-line) (point)))
