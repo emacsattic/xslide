@@ -1,11 +1,12 @@
 ;;;; xslide.el --- XSL Integrated Development Environment
 ;; $Id$
 
-;; Copyright (C) 1998, 1999, 2000, 2001 Tony Graham
+;; Copyright (C) 1998, 1999, 2000, 2001, 2003 Tony Graham
 
 ;; Author: Tony Graham <tkg@menteith.com>
 ;; Contributors: Simon Brooke, Girard Milmeister, Norman Walsh,
-;;               Moritz Maass, Lassi Tuura, Simon Wright, KURODA Akira
+;;               Moritz Maass, Lassi Tuura, Simon Wright, KURODA Akira,
+;;               Ville Skyttä
 ;; Created: 21 August 1998
 ;; Version: $Revision$
 ;; Keywords: languages, xsl, xml
@@ -82,7 +83,7 @@
   "Version number of xslide XSL mode.")
 
 (defun xslide-version ()
-  "Returns the value of the variable xslide-version."
+  "Returns the value of the variable `xslide-version'."
   xslide-version)
 
 (defconst xslide-maintainer-address "xslide-bug@menteith.com")
@@ -91,7 +92,7 @@
 ;; Variables
 
 (defvar xsl-indent-tabs-mode nil
-  "*Initial value of indent-tabs-mode on entering xsl-mode")
+  "*Initial value of indent-tabs-mode on entering `xsl-mode'.")
 
 (defvar xsl-default-filespec "*.xsl"
   "*Initial prompt value for `xsl-etags''s FILESPEC argument.")
@@ -106,16 +107,16 @@
   "*Non-nil disables case insensitive searches by `xsl-grep'.")
 
 (defvar xsl-comment-start "<!--"
-  "*Comment start character sequence")
+  "*Comment start character sequence.")
 
 (defvar xsl-comment-end "-->"
-  "*Comment end character sequence")
+  "*Comment end character sequence.")
 
 (defvar xsl-comment-max-column 70
-  "*Maximum column number for text in a comment")
+  "*Maximum column number for text in a comment.")
 
 (defcustom xsl-initial-stylesheet-file (locate-library "xslide-initial.xsl" t)
-  "*File containing initial stylesheet inserted into empty XSL buffers"
+  "*File containing initial stylesheet inserted into empty XSL buffers."
   :type '(choice (file :must-match t) (const :tag "No initial stylesheet" nil))
   :group 'xsl)
 
@@ -125,12 +126,12 @@
   :group 'xsl)
 
 (defcustom xsl-initial-fo-file (locate-library "xslide-initial.fo" t)
-  "*File containing initial FO stylesheet inserted into empty XSL buffers"
+  "*File containing initial FO stylesheet inserted into empty XSL buffers."
   :type '(choice (file :must-match t) (const :tag "No initial FO file" nil))
   :group 'xsl)
 
 (defcustom xsl-initial-fo-initial-point 0
-  "*Initial position of point in initial FO stylesheet"
+  "*Initial position of point in initial FO stylesheet."
   :type '(integer)
   :group 'xsl)
 
@@ -286,7 +287,7 @@ current line."
 	 (xsl-font-lock-region-point-max)))))
 
 (defun xsl-electric-apos ()
-  "Function called when \"'\" is pressed in XSL mode"
+  "Function called when \"'\" is pressed in XSL mode."
   (interactive)
   (insert "'")
   (if (looking-at "\\([\"/})]\\|$\\)")
@@ -294,7 +295,7 @@ current line."
 	(insert "'"))))
 
 (defun xsl-electric-quote ()
-  "Function called when '\"' is pressed in XSL mode"
+  "Function called when '\"' is pressed in XSL mode."
   (interactive)
   (insert "\"")
   (if (looking-at "\\(['/})]\\|$\\)")
@@ -302,7 +303,7 @@ current line."
 	(insert "\""))))
 
 (defun xsl-electric-lsqb ()
-  "Function called when \"[\" is pressed in XSL mode"
+  "Function called when \"[\" is pressed in XSL mode."
   (interactive)
   (insert "[")
   (if (looking-at "\\([\"'/})]\\|$\\)")
@@ -310,7 +311,7 @@ current line."
 	(insert "]"))))
 
 (defun xsl-electric-lpar ()
-  "Function called when \"(\" is pressed in XSL mode"
+  "Function called when \"(\" is pressed in XSL mode."
   (interactive)
   (insert "(")
   (if (looking-at "\\([\]\"'/}]\\|$\\)")
@@ -318,7 +319,7 @@ current line."
 	(insert ")"))))
 
 (defun xsl-electric-lcub ()
-  "Function called when \"{\" is pressed in XSL mode"
+  "Function called when \"{\" is pressed in XSL mode."
   (interactive)
   (insert "{")
   (if (looking-at "\\([\])\"'/}]\\|$\\)")
@@ -326,13 +327,13 @@ current line."
 	(insert "}"))))
 
 (defun xsl-electric-less-than ()
-  "Function called when \"<\" is pressed in XSL mode"
+  "Function called when \"<\" is pressed in XSL mode."
   (interactive)
   (insert "<")
   (xsl-electric-tab))
 
 (defun xsl-match-opening-tag (a)
-  "Function called to match the next opening tag to a closing tag"
+  "Function called to match the next opening tag to a closing tag."
   (if (looking-at "</")
       (catch 'start-tag
         (while (re-search-backward
@@ -346,7 +347,7 @@ current line."
     nil)
 )
 (defun xsl-electric-slash ()
-  "Function called when \"/\" is pressed in XSL mode"
+  "Function called when \"/\" is pressed in XSL mode."
   (interactive)
   (insert "/")
   (xsl-electric-tab)
@@ -387,6 +388,7 @@ current line."
 		     (xsl-font-lock-region-point-max)))))))))
 
 (defun xsl-electric-return ()
+  "Function called when RET is pressed in XSL mode."
   (interactive)
   (insert "\n")
   (xsl-electric-tab))
@@ -423,7 +425,7 @@ current line."
 
 
 (defun xsl-close-open-tab-p nil
-  "Return 'T' if the current line contains more right than left angle-brackets"
+  "Return t if the current line contains more right than left angle-brackets."
   (save-excursion
     (beginning-of-line)
     (let ((open 0))
@@ -443,7 +445,7 @@ current line."
   )
 
 (defun xsl-calculate-indent ()
-  "Calculate what the indent should be for the current line"
+  "Calculate what the indent should be for the current line."
   (let* ((limit   (point))
  	 (name    "[^<>=\"' \t\n]+")
  	 (string  "\\(\"[^<>\"]*\"\\|'[^<>']*'\\)")
@@ -570,7 +572,7 @@ otherwise complete with allowed attributes."
 
 (defun xsl-insert-tag (tag)
   "Insert a tag, reading tag name in minibuffer with completion."
-  (interactive 
+  (interactive
    (list
     (completing-read "Tag: " xsl-all-elements-alist)))
   ;;  (xsl-find-context-of (point))
@@ -622,7 +624,7 @@ otherwise complete with allowed attributes."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun xsl-insert-template (match)
-  "Insert a template"
+  "Insert a template."
   (interactive "smatch=")
   (xsl-electric-tab)
   (insert (format "<xsl:template match=\"%s\">\n" match))
@@ -685,13 +687,13 @@ otherwise complete with allowed attributes."
 ;; imenu stuff
 
 (defun xsl-sort-alist (alist)
-  "Sort an alist"
+  "Sort an alist."
   (sort
    alist
    (lambda (a b) (string< (car a) (car b)))))
 
 (defun xsl-imenu-create-index-function ()
-  "Create an alist of elements, etc. suitable for use with imenu."
+  "Create an alist of elements, etc. suitable for use with `imenu'."
   (interactive)
   (let ((template-alist '())
 	(mode-alist '())
@@ -893,8 +895,7 @@ When called interactively, the initial FILESPEC is taken from
 xsl-default-filespec, but `xsl-grep' also maintains a history of
 FILESPEC arguments so you can easily re-use a previous value.  The
 history is shared with `xsl-etags' so you can re-use the same FILESPEC
-with both functions.
-"
+with both functions."
   (interactive
    (list
     (xsl-read-from-minibuffer "Pattern: "
@@ -927,8 +928,8 @@ preloaded into the abbreviations table.
 
 Font lock mode:
 
-Turning on font lock mode causes various XSL syntactic structures to be 
-hightlighted. To turn this on whenever you visit an XSL file, add
+Turning on font lock mode causes various XSL syntactic structures to be
+highlighted. To turn this on whenever you visit an XSL file, add
 the following to your .emacs file:
   \(add-hook 'xsl-mode-hook 'turn-on-font-lock\)
 
@@ -993,7 +994,7 @@ the prompts.
   (make-local-variable 'indent-line-function)
   (setq indent-line-function `xsl-electric-tab)
 ;;  (make-local-variable 'font-lock-defaults)
-;;  (setq font-lock-defaults 
+;;  (setq font-lock-defaults
 ;;	'(xsl-font-lock-keywords nil t ((?- . "w")
 ;;					(?_ . "w")
 ;;					(?. . "w"))))
@@ -1028,7 +1029,7 @@ the prompts.
        (reporter-submit-bug-report
 	xslide-maintainer-address
 	(concat "xslide.el " xslide-version)
-	(list 
+	(list
 	 )
 	nil
 	nil
@@ -1039,7 +1040,7 @@ the prompts.
       (beginning-of-line)
       (delete-region (point) (progn (forward-line) (point)))
       (insert
-       "Subject: XSLIDE version " xslide-version " is wonderful but...\n"))))
+       "Subject: xslide " xslide-version " is wonderful but...\n"))))
 
 
 ;;;; Last provisions
