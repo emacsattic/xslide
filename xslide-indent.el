@@ -304,3 +304,5 @@ tab-stop-list will be ignored."
 ;            (message "Indent level: %d" xsl-count-open-tags)
              (+ xsl-good-line-indent-col
                 (* xsl-count-open-tags xsl-tab-width)))))))
+
+;; end of xslide-indent.el
