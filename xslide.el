@@ -48,6 +48,16 @@
 (require 'font-lock)
 ;; XEmacs users don't always have imenu.el installed, so use
 ;; condition-case to cope if xslide causes an error by requiring imenu.
+
+(defconst xsl-xemacs-p nil)
+(defconst xsl-fsfemacs-p nil)
+(defun xsl-xemacs-p () xsl-xemacs-p)
+(defun xsl-fsfemacs-p () xsl-fsfemacs-p)
+(defun xsl-note-emacs-version ()
+  (setq xsl-xemacs-p (string-match "XEmacs" emacs-version)
+	xsl-fsfemacs-p (not xsl-xemacs-p)))
+(xsl-note-emacs-version)
+
 (eval-and-compile
   (condition-case nil
 	(require 'imenu)
@@ -1066,9 +1076,11 @@ the prompts.
 ;;  (xsl-font-make-faces)
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults '(xsl-font-lock-keywords t))
-  (condition-case nil
-      (setq font-lock-mark-block-function 'xsl-font-lock-mark-block-function)
-    (error nil)))
+  (if (xsl-fsfemacs-p)
+      (progn
+	(make-local-variable 'font-lock-mark-block-function)
+	(setq font-lock-mark-block-function
+	      'xsl-font-lock-mark-block-function)))
   (make-local-variable 'indent-line-function)
   (setq indent-line-function `xsl-electric-tab)
 ;;  (make-local-variable 'font-lock-defaults)
