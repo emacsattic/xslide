@@ -18,7 +18,6 @@ BATCHFLAGS = -batch -q -no-site-file
 
 FILES = \
 	ChangeLog \
-	CHANGELOG.TXT \
 	dot_emacs \
 	Makefile \
 	NEWS \
