@@ -309,7 +309,7 @@ ugly."
     (point)))
 
 (defun xsl-font-lock-region-point-max ()
-  "Return the start point of the region to fontify"
+  "Return the end point of the region to fontify"
   (save-excursion
     (re-search-forward ">[ \t]*$" (point-max) 'limit 5)
     (point)))
