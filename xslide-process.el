@@ -24,7 +24,7 @@
 
 ;;;; Commentary:
 
-;; Copied almost wholesale from psgml.el by Lennart Staflin
+;; Originally copied almost wholesale from psgml.el by Lennart Staflin
 
 ;; Send bugs to xslide-bug@menteith.com
 ;; Use `xsl-submit-bug-report' for bug reports
@@ -36,6 +36,16 @@
 
 (defcustom xsl-offer-save t
   "*If non-nil, ask about saving modified buffers before \\[xsl-process] is run."
+  :type '(choice (const :tag "Yes" t) (const :tag "No" nil))
+  :group 'xsl-process)
+
+(defcustom xsl-process-browse-output nil
+  "*If non-nil, open output in browser after \\[xsl-process] is run."
+  :type '(choice (const :tag "Yes" t) (const :tag "No" nil))
+  :group 'xsl-process)
+
+(defcustom xsl-process-find-output nil
+  "*If non-nil, find output file after \\[xsl-process] is run."
   :type '(choice (const :tag "Yes" t) (const :tag "No" nil))
   :group 'xsl-process)
 
@@ -52,7 +62,10 @@
    ;; Saxon
    "java com.icl.saxon.StyleSheet -o %o %i %s"
    ;; Saxon using xml-stylesheet PI
-   "java com.icl.saxon.StyleSheet -o %o %i")
+   "java com.icl.saxon.StyleSheet -o %o %i"
+   ;; xsltproc
+   "xsltproc -o %o %s %i"
+   )
   "*The shell command to process an XSL document.
 
 This is a `format' control string that by default should contain three
@@ -86,6 +99,7 @@ format control string instead of the defaults.")
 (defcustom xsl-process-error-regexps
   '(("file:\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\):" 1 2 3)
     ("file:/\\(\\([A-Za-z]:\\)?[^:]+\\):\\([0-9]+\\):\\(\\([0-9]+\\):\\)?" 1 3 5)
+    ("^\\([^:]+\\): \\([0-9]+\\): error:" 1 2)
     ("^Error at [^ ]+ on line \\([0-9]+\\) of file:\\([^:]+\\):$" 2 1)
     ("^Error at [^ ]+ on line \\([0-9]+\\) of file:/\\(\\([a-z]:\\)?[^:]+\\):$" 2 1))
   "Alist of regexps to recognize error messages from `xsl-process'.
@@ -214,7 +228,14 @@ populate this command's command history with the command lines to run
 several XSLT processors using those values.  Use M-p and M-n to step
 through the predefined commands, edit a command if necessary, or enter
 a new command line.  The next time that this command is run, the
-previously executed command is used as the default."
+previously executed command is used as the default.
+
+If `xsl-process-browse-output' is non-nil, the filename entered in
+response to the \"Output file:\" prompt is opened in a browser using
+`browse-url'.
+
+If `xsl-process-view-output' is non-nil, the filename entered in
+response to the \"Output file:\" prompt is opened in a buffer."
   (interactive
    (list (progn
 	   (if (or
@@ -231,7 +252,12 @@ previously executed command is used as the default."
       (save-some-buffers nil nil))
   (compile-internal command "No more errors" "XSL process"
 		    nil
-		    xsl-process-error-regexps))
+		    xsl-process-error-regexps)
+  (if xsl-process-browse-output
+      (browse-url xsl-process-output-file))
+  (if xsl-process-find-output
+      (switch-to-buffer
+       (find-file-noselect (expand-file-name xsl-process-output-file)))))
 
 
 (provide 'xslide-process)
