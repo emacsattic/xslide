@@ -1,3 +1,24 @@
+2003-11-08  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* xslide.el: Require 'sendmail so can remove test for
+	`mail-position-on-field'.  Added adding .xsl and .fo patterns to
+	`auto-mode-alist'.
+
+	* xslide-indent.el: Added 'end of xslide-indent.el' at end.
+
+2003-11-06  Glen Peterson <glenpeterson@users.sourceforge.net>
+
+	* xslide-font.el: This patch avoids unnecessary regexp-opt calls
+	by getting rid of some cut-n-paste code.  Compliments of Ville
+	Skytta.
+
+	* xslide-indent.el: New file for indentation variables and
+	functions.
+
+	* xslide.el: Split indentation variables and functions into a new
+	file: xslide-indent.  I also deleted some old commented-out code.
+	No change of functionality.
+
 2003-11-05  Glen Peterson <glenpeterson@users.sourceforge.net>
 
 	* xslide.el: Fixes for a number of indentation issues
