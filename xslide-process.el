@@ -55,6 +55,8 @@
    "xt %i %s %o"
    ;; XT Java
    "java com.jclark.xsl.Driver %i %s %o"
+   ;; Xalan-Java 2
+   "java org.apache.xalan.xslt.Process -IN %i -XSL %s -OUT %o"
    ;; Instant Saxon
    "saxon -o %o %i %s"
    ;; Instant Saxon using xml-stylesheet PI
@@ -65,28 +67,32 @@
    "java com.icl.saxon.StyleSheet -o %o %i"
    ;; xsltproc
    "xsltproc -o %o %s %i"
+   ;; jd.xslt
+   "java jd.xml.xslt.Stylesheet -out %o %i %s"
+   ;; Oracle XDK for Java
+   "java oracle.xml.parser.v2.oraxsl %i %s %o"
    )
   "*The shell command to process an XSL document.
 
 This is a `format' control string that by default should contain three
 `%s' conversion specifications: the first will be replaced by the
-value of xsl-process-input-file \(or the empty string, if nil\); the
-second will be replaced by xsl-process-stylesheet-file \(or the empty
+value of `xsl-process-input-file' \(or the empty string, if nil\); the
+second will be replaced by `xsl-process-stylesheet-file' \(or the empty
 string, if nil\); the third will be replaced by
-xsl-process-output-file \(or the empty string, if nil\).
+`xsl-process-output-file' \(or the empty string, if nil\).
 
 If `xsl-process-files' is non-nil, the format string should contain
 one `%s' conversion specification for each element of its result.
 
-If xsl-process-command is a list, then every element should be a
+If `xsl-process-command' is a list, then every element should be a
 string.  The strings will be tried in order and %-sequences in the
 string will be replaced according to the list below, if the string contains
 %-sequences with no replacement value the next string will be tried.
 
 %b means the visited file of the current buffer
-%i means the value of xsl-process-input-file
-%s means the value of xsl-process-stylesheet-file
-%o means the value of xsl-process-output-file
+%i means the value of `xsl-process-input-file'
+%s means the value of `xsl-process-stylesheet-file'
+%o means the value of `xsl-process-output-file'
 "
   :type '(repeat :tag "Commands" string)
   :group 'xsl-process)
@@ -97,12 +103,41 @@ These file names will serve as the arguments to the `xsl-process-command'
 format control string instead of the defaults.")
 
 (defcustom xsl-process-error-regexps
-  '(("file:\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\):" 1 2 3)
-    ("file:/\\(\\([A-Za-z]:\\)?[^:]+\\):\\([0-9]+\\):\\(\\([0-9]+\\):\\)?" 1 3 5)
-    ("^\\([^:]+\\): \\([0-9]+\\): error:" 1 2)
-    ("^Error at [^ ]+ on line \\([0-9]+\\) of file:\\([^:]+\\):$" 2 1)
-    ("^Error at [^ ]+ on line \\([0-9]+\\) of file:/\\(\\([a-z]:\\)?[^:]+\\):$" 2 1))
-  "Alist of regexps to recognize error messages from `xsl-process'.
+  '(
+    ;; Xalan-Java 2
+    ;;   file:///path/to/foo.xsl; Line 9; Column 12; ...
+    ("^file:\\([^;]+\\)\\; Line \\([0-9]+\\)\\;\\( Column \\([0-9]+\\)\\;\\)?"
+     1 2 4)
+
+    ;; Saxon
+    ;;   Error at xsl:output on line 9 of file:/path/to/foo.xsl:
+    ;;   Error on line 9 column 5 of file:/path/to/foo.xsl:
+    ("^Error\\( at [^ ]+\\)? on line \\([0-9]+\\)\\( column \\([0-9]+\\)\\)? of file:\\(\\(/[A-Za-z]:\\)?[^:]+\\):$"
+     5 2 4)
+
+    ;; Oracle
+    ;;   file:/path/to/foo.xsl<Line 9, Column 17>: ...
+    ("^file:\\([^<]+\\)<Line \\([0-9]+\\)\\(, Column \\([0-9]+\\)\\)?>:"
+     1 2 4)
+
+    ;; jd.xslt
+    ;;   - uri       = file:/path/to/foo.xsl
+    ;;   - line      = 9
+    ;;   - column    = -1
+    ;; ...or...
+    ;;   - uri       = file:/path/to/foo.xsl
+    ;;   - element   = xsl:output (line 9)
+    ("^- uri[ \t]+= file:\\(.+\\)\\([\r\n+]- \\(\\([^(]*?(\\)?line[ \t]+\\(= \\)?\\([0-9]+\\)\\)?\\)?\\([\r\n]+- column[ \t]+= \\([0-9]+\\)\\)?" 1 6 8)
+
+    ;; Generic
+    (".*\\<file:\\(\\(/[A-Za-z]:\\)?[^:]+\\):[ \t]*\\(\\([0-9]+\\):[ \t]*\\(\\([0-9]+\\):\\)?\\)?"
+     1 4 6)
+    (".*\\([^ ]+\\.x[ms]l\\):[ \t]*\\([0-9]+\\):[ \t]*\\(\\([0-9]+\\):\\)?"
+     1 2 4)
+    ("^\\([^:]+\\): \\([0-9]+\\): error:"
+     1 2)
+    )
+  "*Alist of regexps to recognize error messages from `xsl-process'.
 See `compilation-error-regexp-alist'."
   :type '(repeat :tag "Regexps"
 		 (list (regexp :tag "Regexp")
