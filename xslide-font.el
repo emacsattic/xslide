@@ -297,21 +297,21 @@ often starts or ends partway through a comment or declaration, turning
 that half white because the keywords didn't match, and it just looks so
 ugly."
   (let ((current-point (point)))
-    (re-search-forward ">[ \t]*$" (point-max) 'limit 5)
+    (re-search-forward "<" (point-max) 'limit 5)
     (set-mark (point))
     (goto-char current-point)
-    (re-search-backward "^[ \t]*<" (point-min) 'limit 5)))
+    (re-search-backward "<" (point-min) 'limit 5)))
 
 (defun xsl-font-lock-region-point-min ()
   "Return the start point of the region to fontify"
   (save-excursion
-    (re-search-backward "^[ \t]*<" (point-min) 'limit 5)
+    (re-search-backward "<" (point-min) 'limit 5)
     (point)))
 
 (defun xsl-font-lock-region-point-max ()
   "Return the start point of the region to fontify"
   (save-excursion
-    (re-search-forward ">[ \t]*$" (point-max) 'limit 5)
+    (re-search-forward "<" (point-max) 'limit 5)
     (point)))
 
 (provide 'xslide-font)
