@@ -1,4 +1,27 @@
-2003-08-04  Glen Peterson <glen@organicdesign.org>
+2003-11-05  Glen Peterson <glenpeterson@users.sourceforge.net>
+
+	* xslide.el: Fixes for a number of indentation issues
+	including:
+		- tags within comments or cdata sections will not
+		affect indenting.
+	
+		- Indent-region will no longer affect text inside 
+		comments, cdata, and <xsl:text> sections. You can 
+		change the indentation of these sections by pressing
+		the tab key manually or hitting delete.
+
+		- Made return take you to the (more or less) proper 
+		indentation for the next line.
+
+		- Wrapped the yank function to indent the text after
+		it is pasted.
+
+		- Fixed numerous typos in my numerous comments
+
+	* xslide-font.el: Avoided unnecessary regexp-opt calls by
+	removing cut-n-paste code.
+
+2003-08-04  Glen Peterson <glenpeterson@users.sourceforge.net>
 
 	* xslide.el: Updated version to 0.2.3.
 
