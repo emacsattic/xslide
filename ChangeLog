@@ -1,6 +1,23 @@
+2003-07-02  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* xslide-font.el: Corrected a doc string.
+
+	* xslide.el: Added `xsl-if-to-choose', changed version to 0.2.3,
+	changed completions.
+
+2003-06-05  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* xslide.el: Fix docstring nits from patch 586138 (Ville Skytta).
+
+	* xslide-process.el: Added support for more XSLT processors from
+	patch 529922 (Ville Skytta).
+
+	* README.TXT: Updated instructions for byte-compiling without
+	using makefile.
+
 2003-05-26  Tony Graham  <tonygraham@users.sourceforge.net>
 
-	* === Released 0.2.1 ===
+	* === Released 0.2.1 ===.
 
 	* Makefile, README.TXT: 'makefile' is now 'Makefile' and other
 	files changed capitalisation.
