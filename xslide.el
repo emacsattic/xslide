@@ -442,7 +442,7 @@ current line."
  	 (attval  (concat name "=" string))
  	 (oattval (concat name "=" ostring))
  	 (element (concat "<\\(" name "\\)"
- 			  "\\([ \t\n]+" attval "\\)*"))
+ 			  "\\([ \t\n]+" attval "\\)*[ \t\n]*"))
  	 (meta    (concat "<!\\(DOCTYPE\\|ENTITY\\)"
  			  "\\([ \t\n]+\\(" name "\\|" string "\\)\\)*")))
     (save-excursion
