@@ -1,5 +1,7 @@
 2003-08-04  Tony Graham  <tonygraham@users.sourceforge.net>
 
+	* === Released 0.2.2 ===.
+
 	* Makefile: Removed CHANGELOG.TXT from dist.
 
 	* NEWS: Updated for 0.2.2.
