@@ -6,7 +6,7 @@
 ;; Author: Tony Graham <tkg@menteith.com>
 ;; Contributors: Simon Brooke, Girard Milmeister, Norman Walsh,
 ;;               Moritz Maass, Lassi Tuura, Simon Wright, KURODA Akira,
-;;               Ville Skyttä
+;;               Ville Skyttä, Glen Peterson
 ;; Created: 21 August 1998
 ;; Version: $Revision$
 ;; Keywords: languages, xsl, xml
@@ -60,7 +60,6 @@
 (require 'xslide-font "xslide-font")
 (require 'xslide-process "xslide-process")
 
-
 ;; Define core `xsl' group.
 (defgroup xsl nil
   "Major mode for editing XSL."
@@ -79,7 +78,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Version information
 
-(defconst xslide-version "0.2.1"
+(defconst xslide-version "0.2.2"
   "Version number of xslide XSL mode.")
 
 (defun xslide-version ()
@@ -231,12 +230,89 @@ lines above and below COMMENT in the manner of `xsl-big-comment'."
   (define-key xsl-mode-map [(control o)]
 				   	  'xsl-open-line)
   (define-key xsl-mode-map "\C-c<"  	  'xsl-insert-tag)
+  (define-key xsl-mode-map "\C-c\C-t"     'xsl-if-to-choose)
 ;;  (define-key xsl-mode-map [(control m)]	  'xsl-electric-return)
 ;;  (define-key xsl-mode-map \10	  'xsl-electric-return)
   (define-key xsl-mode-map "\177"	  'backward-delete-char-untabify)
 ;;  (define-key xsl-mode-map "\M-\C-e" 'xsl-next-rule)
 ;;  (define-key xsl-mode-map "\M-\C-a" 'xsl-previous-rule)
 ;;  (define-key xsl-mode-map "\M-\C-h" 'mark-xsl-rule)
+)
+
+(defun xsl-if-to-choose ()
+"Converts <xsl:if> to <xsl:choose>.  Works on a single 'ifs' or on a region.
+So:
+
+<xsl:if test=\"isFive = 5\"><p>It's five!</p></xsl:if>
+
+Becomes:
+<xsl:choose>
+   <xsl:when test=\"isFive = 5\"><p>It's five!</p></xsl:when>
+   <xsl:otherwise></xsl:otherwise>
+</xsl:choose>
+
+If you put your cursor inside the open-tag of the if, it will work on that tag
+only.  If you highlight a region, it will convert every 'if' whose start tag is
+within that region.  It is very easy to convert consecutive 'if's to a single
+choose by deleting the appropriate lines after executing this command.
+
+Bound to C-c C-t by default."
+  (interactive)
+  (let
+    (
+      (single-if (not (mark)))
+      (the-start (point))
+      (the-end (if (mark) (mark) (point)))
+    )
+    (if (and (not (null (mark)))
+             (< (mark) (point)))
+      (progn
+        (exchange-point-and-mark)
+        (setq the-start (point))
+        (setq the-end (mark))
+      )
+    )
+    (save-excursion
+      (if single-if
+        (progn
+          (search-backward "<" nil t)
+;          (message "xsl-if-to-choose: single if mode")
+          (xsl-convert-if-to-choose-slave)
+        )
+        (save-excursion
+;          (message
+;            (concat "xsl-if-to-choose: Region mode: "
+;                    (int-to-string the-start)
+;                    " "
+;                    (int-to-string the-end)
+;            )
+;          )
+          (goto-char the-end)
+          (if (save-excursion (search-backward "<xsl:if" the-start t))
+            (while (search-backward "<xsl:if" the-start t)
+              (xsl-convert-if-to-choose-slave)
+            )
+            (message "xsl-if-to-choose error: There's no <xsl:if> within the selected region.")            
+          )
+        )
+      )
+    )
+  )
+)
+
+(defun xsl-convert-if-to-choose-slave ()
+  (if (looking-at "<xsl:if")
+    (let
+      ( (start (save-excursion (beginning-of-line) (point))) )      
+      (delete-char 7)
+      (insert "<xsl:choose>\n<xsl:when")
+      (search-forward "</xsl:if>" nil t)
+      (backward-delete-char 9)
+      (insert "</xsl:when>\n<xsl:otherwise></xsl:otherwise>\n</xsl:choose>")
+      (indent-region start (point) nil)
+    )
+      (message "xsl-if-to-choose error: point is not within the start tag of an <xsl:if>.")
+  )
 )
 
 (defun xsl-electric-greater-than (arg)
@@ -564,11 +640,11 @@ otherwise complete with allowed attributes."
 	       (insert completion))
 	      (t
 	       (goto-char here)
-	       (let ((res (completing-read
-			   "xsl-complete: " tab nil t pattern)))
-		 (insert
-		  ;; insert completed strings(res) after pattern
-		  (substring res (length pattern))))))))))
+	       (message "Making completion list...")
+	       (let ((list (all-completions pattern tab)))
+		 (with-output-to-temp-buffer " *Completions*"
+		   (display-completion-list list)))
+	       (message "Making completion list...%s" "done")))))))
 
 (defun xsl-insert-tag (tag)
   "Insert a tag, reading tag name in minibuffer with completion."
@@ -990,7 +1066,9 @@ the prompts.
 ;;  (xsl-font-make-faces)
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults '(xsl-font-lock-keywords t))
-  (setq font-lock-mark-block-function 'xsl-font-lock-mark-block-function)
+  (condition-case nil
+      (setq font-lock-mark-block-function 'xsl-font-lock-mark-block-function)
+    (error nil)))
   (make-local-variable 'indent-line-function)
   (setq indent-line-function `xsl-electric-tab)
 ;;  (make-local-variable 'font-lock-defaults)
@@ -1025,6 +1103,7 @@ the prompts.
 (defun xsl-submit-bug-report ()
   "Submit via mail a bug report on 'xslide'."
   (interactive)
+  (require 'reporter)
   (and (y-or-n-p "Do you really want to submit a report on XSL mode? ")
        (reporter-submit-bug-report
 	xslide-maintainer-address
@@ -1043,6 +1122,8 @@ the prompts.
        "Subject: xslide " xslide-version " is wonderful but...\n"))))
 
 
+(autoload 'reporter-submit-bug-report "reporter")
+
 ;;;; Last provisions
 ;;;(provide 'xslide)
 
