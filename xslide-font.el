@@ -1,9 +1,11 @@
 ;;;; xslide-font.el --- Tony's XSL font lock keywords
 ;; $Id$
 
-;; Copyright (C) 1998, 1999, 2000, 2001 Tony Graham
+;; Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003 Tony Graham
 
 ;; Author: Tony Graham <tkg@menteith.com>
+;; Contributors: Ville Skyttä
+;; Version: $Revision$
 
 ;;; This file is not part of GNU Emacs.
 
@@ -148,10 +150,7 @@
 	      (mapcar 'car xsl-attributes-alist)
 	      t))
 	    (xsl-attributes-alist-regexp-depth
-	     (regexp-opt-depth
-	      (regexp-opt
-	       (mapcar 'car xsl-attributes-alist)
-	       t))))
+	     (regexp-opt-depth xsl-attributes-alist-regexp)))
        (list
 	(concat
 	 "\\b\\("
@@ -170,10 +169,7 @@
 	      (mapcar 'car xsl-attributes-alist)
 	      t))
 	    (xsl-attributes-alist-regexp-depth
-	     (regexp-opt-depth
-	      (regexp-opt
-	       (mapcar 'car xsl-attributes-alist)
-	       t))))
+	     (regexp-opt-depth xsl-attributes-alist-regexp)))
        (list
 	(concat
 	 "\\b\\("
@@ -194,10 +190,7 @@
 	      (mapcar 'car xsl-fo-attribute-symbol-alist)
 	      t))
 	    (xsl-fo-attribute-symbol-alist-regexp-depth
-	     (regexp-opt-depth
-	      (regexp-opt
-	       (mapcar 'car xsl-fo-attribute-symbol-alist)
-	       t))))
+	     (regexp-opt-depth xsl-fo-attribute-symbol-alist-regexp)))
        (list
 	(concat
 	 "\\b\\("
@@ -216,10 +209,7 @@
 	      (mapcar 'car xsl-fo-attribute-symbol-alist)
 	      t))
 	    (xsl-fo-attribute-symbol-alist-regexp-depth
-	     (regexp-opt-depth
-	      (regexp-opt
-	       (mapcar 'car xsl-fo-attribute-symbol-alist)
-	       t))))
+	     (regexp-opt-depth xsl-fo-attribute-symbol-alist-regexp)))
        (list
 	(concat
 	 "\\b\\("
