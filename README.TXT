@@ -1,10 +1,13 @@
 This package contains an Emacs major mode for editing XSL stylesheets.
-The current revision is 0.2.1, dated 26 May 2003.
+The current revision is 0.2.2, dated 4 August 2003.
 
 The xslide home page is http://www.menteith.com/xslide/
 
 xslide source code is also available at
 http://www.sourceforge.net/projects/xslide/.
+
+The xslide mailing list is xslide-list@lists.sourceforge.net.  See
+https://lists.sourceforge.net/lists/listinfo/xslide-list/.
 
 * MANIFEST
 
@@ -56,11 +59,14 @@ is not spelled out as "x-s-l-i-d-e".
  - Automatic completion of end-tags;
 
  - Automatic indenting of elements with user-definable indentation
-   step; and
+   step;
+
+ - `xsl-if-to-choose' converts <xsl:if> to <xsl:choose> with
+   nested <xsl:when>; and
 
  - Comprehensive abbreviations table to further ease typing.
 
-xsl-mode was tested using Emacs 20.7.1.
+xsl-mode was tested using Emacs 21.2.1 and XEmacs 21.4.
 
 
 * BUG REPORTS/ENCHANCEMENTS
@@ -70,12 +76,6 @@ Use `xsl-submit-bug-report' for bug reports.
 
 Bug reports and enhancement requests can also be logged on the
 SourceForge site.
-
-
-* MAILING LIST
-
-xslide-list@lists.sourceforge.net is the xslide mailing list.  See
-https://lists.sourceforge.net/lists/listinfo/xslide-list/.
 
 
 * INSTALLATION
