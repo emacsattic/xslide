@@ -1,5 +1,10 @@
 This package contains an Emacs major mode for editing XSL stylesheets.
-The current revision is 0.2b3, dated 7 April, 2001.
+The current revision is 0.2, dated 27 August, 2001.
+
+The xslide home page is http://www.menteith.com/xslide/
+
+xslide source code is also available at
+http://www.sourceforge.net/projects/xslide/.
 
 * MANIFEST
 
@@ -18,6 +23,9 @@ makefile                Makefile for byte-compiling
 
 Note that make-regexp.el, which was used by earlier version of xslide,
 is not required by xslide 0.2.
+
+Note that "xslide" is pronounced as one word, similar to "slide".  It
+is not spelled out as "x-s-l-i-d-e".
 
 
 * FEATURES
@@ -50,7 +58,7 @@ is not required by xslide 0.2.
 
  - Comprehensive abbreviations table to further ease typing.
 
-xsl-mode was tested using NTEmacs 20.3.1.
+xsl-mode was tested using NTEmacs 20.7.1.
 
 
 * BUG REPORTS/ENCHANCEMENTS
@@ -70,7 +78,8 @@ Use `xsl-submit-bug-report' for bug reports.
    local convention.
 
 2. Copy the .el files to your emacs site-lisp directory (e.g.,
-   /usr/local/lib/emacs/site-lisp).
+   /usr/local/lib/emacs/site-lisp) or some other directory that is on
+   your Emacs load path.
 
 3. Byte compile the .el files using M-x byte-compile-file and
    supplying the path name of each file.
@@ -91,6 +100,9 @@ Use `xsl-submit-bug-report' for bug reports.
 
 7. To find out more about xsl-mode, type C-h m from within an XSL
    file.
+
+8. To customize xsl-mode font-lock colours, etc., browse the `Xsl'
+   Customize group after loading xsl-mode.
 
 -----
 $Id$

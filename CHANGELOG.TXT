@@ -2,6 +2,50 @@ xslide Change Log
 =================
 $Id$
 
+Revision 0.2, 27 August 2001
+============================
+
+xslide.el
+---------
+
+Added customising of `xsl-indent-attributes' and
+`xsl-indent-element-step'.
+
+Changed name completion based on bug fix by KURODA Akira.
+
+xslide-process.el
+-----------------
+
+Finally fixed Saxon process error regexp.
+
+xslide-font.el
+--------------
+
+Changed some font-lock colours.
+
+Finally fixed bug where XSLT attributes were coloured as FO
+attributes.
+
+xslide-data.el
+--------------
+
+Updated FO element and attribute names to match XSL PR.
+
+Makefile
+--------
+
+Changed $(PRELOADS) to emulate version that works well with tdtd.
+
+README.TXT
+----------
+
+Added pronunciation note.
+
+Added note about "Xsl" Customize group.
+
+Added note that xslide should be installed on your Emacs load path.
+
+
 Revision 0.2b3, 7 April 2001
 ============================
 
