@@ -1,0 +1,7 @@
+2001-10-20  Tony Graham  <tkg@menteith.com>
+
+	* xslide-process.el: Add ability to view or browse process output
+	and xsl-process-view-output and xsl-process-browse-output
+	customizable variables to control them.  Add error-regexp and
+	process command template for xsltproc.
+
