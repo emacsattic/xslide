@@ -1,3 +1,17 @@
+2003-07-18  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* dot_emacs: Added commented-out autoloads of `xsl-grep' and
+	`xsl-process'.
+
+	* xslide.el: Removed one of two autoloads of
+	`reporter-submit-bug-report'.
+
+2003-07-14  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* xslide.el: Added `xsl-xemacs-p', `xsl-fsfemacs-p', and
+	`xsl-note-emacs-version' so can better handle Emacs/XEmacs
+	differences.  Used `xsl-fsfemacs-p' in `xsl-mode'.
+
 2003-07-14  Tony Graham  <tonygraham@users.sourceforge.net>
 
 	* xslide.el: Added `xsl-xemacs-p', `xsl-fsfemacs-p', and
