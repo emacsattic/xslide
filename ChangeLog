@@ -1,3 +1,9 @@
+2003-07-14  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* xslide.el: Added `xsl-xemacs-p', `xsl-fsfemacs-p', and
+	`xsl-note-emacs-version' so can better handle Emacs/XEmacs
+	differences.  Used `xsl-fsfemacs-p' in `xsl-mode'.
+
 2003-07-02  Tony Graham  <tonygraham@users.sourceforge.net>
 
 	* xslide-font.el: Corrected a doc string.
