@@ -1,3 +1,10 @@
+Changes between 0.2.1 and 0.2.2
+
+* Added `xsl-if-to-choose' (Glen Petersen)
+* Added support for more XSLT processors (Ville Skytta)
+* Improved XEmacs compatibility
+* Minor bug fixes
+
 Changes between 0.2 and 0.2.1
 
 * Added ability to view or browse `xsl-process' output
