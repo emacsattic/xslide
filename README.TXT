@@ -92,17 +92,34 @@ https://lists.sourceforge.net/lists/listinfo/xslide-list/.
    /usr/local/lib/emacs/site-lisp) or some other directory that is on
    your Emacs load path.
 
-3. Load xslide.el (M-x load-file RET xslide.el) then byte
-   compile the .el files using C-0 M-x byte-recompile-directory and
-   supplying the path name of the directory containing the .el files.
-
-   The provided makefile also has rules for byte-compiling the files.
+3. Byte-compile the .el files, if you want.
 
    If you byte-compiled a previous version of the files, you must
    byte-compile the new files (or remove the old .elc files) so that
    autoload loads the correct versions.
 
-4. Add the elisp code in dot_emacs to your .emacs file.
+   If there are any byte compiler warning, ignore them.  They probably
+   can't be avoided with code that is run on multiple Emacs versions
+   [1].
+
+   There are two easy ways to byte-compile the .el files:
+
+   a. Byte-compile from within Emacs:
+
+      Load xslide.el (M-x load-file RET xslide.el) then byte
+      compile the .el files using C-0 M-x byte-recompile-directory and
+      supplying the path name of the directory containing the .el
+      files.
+
+   or
+
+   b. Byte-compile using the provided Makefile:
+
+      First, review the values of EMACS and SHELL in the Makefile.
+      Second, run 'make' without arguments to byte-compile the files.      
+
+4. Add the elisp code in dot_emacs to your .emacs file.  Uncomment any
+   portions that you want to also use.
 
 5. Restart Emacs (or, if it's easier for you, evaluate the code that
    you just added to your .emacs file).
@@ -115,6 +132,10 @@ https://lists.sourceforge.net/lists/listinfo/xslide-list/.
 
 8. To customize xsl-mode font-lock colours, etc., browse the `Xsl'
    Customize group after loading xsl-mode.
+
+
+Notes:
+[1] Originally noted by the VM mail reader by Kyle Jones.
 
 -----
 $Id$
