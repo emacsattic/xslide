@@ -1,3 +1,12 @@
+2003-08-04  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* Makefile: Removed CHANGELOG.TXT from dist.
+
+	* NEWS: Updated for 0.2.2.
+
+	* README.TXT: Upped version number, added `xsl-if-to-choose' to
+	features.
+
 2003-08-03  Tony Graham  <tonygraham@users.sourceforge.net>
 
 	* README.TXT: Reworked byte-compiling instructions, added note to
@@ -27,7 +36,7 @@
 
 	* xslide-font.el: Corrected a doc string.
 
-	* xslide.el: Added `xsl-if-to-choose', changed version to 0.2.3,
+	* xslide.el: Added `xsl-if-to-choose', changed version to 0.2.2,
 	changed completions.
 
 2003-06-05  Tony Graham  <tonygraham@users.sourceforge.net>
