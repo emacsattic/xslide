@@ -434,7 +434,6 @@ current line."
 
 (defun xsl-calculate-indent ()
   "Calculate what the indent should be for the current line"
-  (interactive)
   (let* ((limit   (point))
  	 (name    "[^<>=\"' \t\n]+")
  	 (string  "\\(\"[^<>\"]*\"\\|'[^<>']*'\\)")
@@ -981,6 +980,8 @@ the prompts.
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults '(xsl-font-lock-keywords t))
   (setq font-lock-mark-block-function 'xsl-font-lock-mark-block-function)
+  (make-local-variable 'indent-line-function)
+  (setq indent-line-function `xsl-electric-tab)
 ;;  (make-local-variable 'font-lock-defaults)
 ;;  (setq font-lock-defaults 
 ;;	'(xsl-font-lock-keywords nil t ((?- . "w")
