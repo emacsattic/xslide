@@ -995,6 +995,8 @@ the prompts.
 ;;	      compilation-error-regexp-alist))
 
   (set-syntax-table xsl-mode-syntax-table)
+  (make-local-variable 'indent-line-function)
+  (setq indent-line-function 'xsl-electric-tab)
   ;; Maybe insert space characters when user hits "Tab" key
   (setq indent-tabs-mode xsl-indent-tabs-mode)
   (if (and
