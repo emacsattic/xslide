@@ -1,0 +1,7 @@
+Changes between 0.2 and 0.2.1
+
+* Added ability to view or browse `xsl-process' output
+* Added `ident-region' support
+* Added error-regexp and process command template for xsltproc
+* Added more XSL properties in xslide-data.el
+* Minor bug fixes
