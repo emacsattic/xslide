@@ -92,8 +92,9 @@ https://lists.sourceforge.net/lists/listinfo/xslide-list/.
    /usr/local/lib/emacs/site-lisp) or some other directory that is on
    your Emacs load path.
 
-3. Byte compile the .el files using M-x byte-compile-file and
-   supplying the path name of each file.
+3. Load xslide.el (M-x load-file RET xslide.el) then byte
+   compile the .el files using C-0 M-x byte-recompile-directory and
+   supplying the path name of the directory containing the .el files.
 
    The provided makefile also has rules for byte-compiling the files.
 
