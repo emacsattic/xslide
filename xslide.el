@@ -1105,6 +1105,7 @@ the prompts.
   "Submit via mail a bug report on 'xslide'."
   (interactive)
   (require 'reporter)
+  (require 'sendmail)
   (and (y-or-n-p "Do you really want to submit a report on XSL mode? ")
        (reporter-submit-bug-report
 	xslide-maintainer-address
@@ -1118,12 +1119,6 @@ the prompts.
      "Please change the Subject header to a concise bug description.\nRemember to cover the basics, that is, what you expected to\nhappen and what in fact did happen.  Please remove these\ninstructions from your message.")
     (save-excursion
       (goto-char (point-min))
-      ; XEmacs users may not have this function, so define it just to
-      ; avoid compilation errors.
-      (eval-and-compile
-        (if (not (functionp 'mail-position-on-field))
-            (defun mail-position-on-field (arg)
-              (message "Cannot send mail: lisp function mail-position-on-field is undefined"))))
       (mail-position-on-field "Subject")
       (beginning-of-line)
       (delete-region (point) (progn (forward-line) (point)))
@@ -1135,5 +1130,8 @@ the prompts.
 
 ;;;; Last provisions
 ;;;(provide 'xslide)
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.\\(?:xsl\\|fo\\)$" . xsl-mode))
 
 ;;; xslide.el ends here
