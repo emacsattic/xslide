@@ -1,4 +1,39 @@
+2003-05-26  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* === Released 0.2.1 ===
+
+	* Makefile, README.TXT: 'makefile' is now 'Makefile' and other
+	files changed capitalisation.
+
+	* README.TXT, xslide.el: Updated for xslide 0.2.1.
+
+	* NEWS, TODO: Added NEWS and TODO files.
+
+2003-05-20  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* xslide.el: Added unused `xsl-initial-fo-file' and
+	`xsl-initial-fo-initial-point'.
+
+	* xslide-data.el: Added some padding, space, line-height, and keep
+	entries.
+
+	* xslide-font.el: Now cope with whitespace in
+	`xsl-font-lock-region-point-min', etc.
+
+2001-11-16  Tony Graham  <tkg@menteith.com>
+
+	* xslide-font.el: Changed font-lock block limit regexps to just
+	'<'.
+
+	* xslide.el: Set `indent-line-function' so `indent-region' works
+	correctly.
+
 2001-10-20  Tony Graham  <tkg@menteith.com>
+
+	* ChangeLog: Added ChangeLog since incremental changes now
+	available from CVS.
+
+	* xslide.el: Set ident-line-function to `xsl-electric-tab'.
 
 	* xslide-process.el: Add ability to view or browse process output
 	and xsl-process-view-output and xsl-process-browse-output
