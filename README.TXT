@@ -11,9 +11,10 @@ http://www.sourceforge.net/projects/xslide/.
 File                    Contents
 
 README.TXT              The file you are reading
-ChangeLog		Log of changes since xslide 0.2
-NEWS			Summary of what's new or changed about xslide
-TODO			List of sample things to do next
+ChangeLog               Log of changes since xslide 0.2
+Makefile                Makefile for byte-compiling 
+NEWS                    Summary of what's new or changed about xslide
+TODO                    List of sample things to do next
 dot_emacs               Some things for your .emacs file
 xslide.el               Base file for the XSL major mode
 xslide-abbrev.el        Abbreviations for XSL mode
@@ -21,7 +22,6 @@ xslide-data.el          Data about XSL elements and formatting objects
 xslide-font.el          Font lock keywords for XSL stylesheets
 xslide-initial.xsl      Default initial stylesheet inserted in empty buffers
 xslide-process.el       Procedures for processing XSL stylesheets
-makefile                Makefile for byte-compiling 
 
 Note that make-regexp.el, which was used by earlier version of xslide,
 is not required by xslide 0.2 or later.

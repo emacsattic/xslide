@@ -17,10 +17,13 @@ PRELOADS =  -l font-lock -l sendmail \
 BATCHFLAGS = -batch -q -no-site-file
 
 FILES = \
-	changelog.txt \
+	ChangeLog \
+	CHANGELOG.TXT \
 	dot_emacs \
-	makefile \
+	Makefile \
+	NEWS \
 	README.TXT \
+	TODO \
 	xslide-abbrev.el \
 	xslide-data.el \
 	xslide-font.el \
