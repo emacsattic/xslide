@@ -94,7 +94,7 @@
   "*Initial value of indent-tabs-mode on entering xsl-mode")
 
 (defvar xsl-default-filespec "*.xsl"
-  "*Inital prompt value for `xsl-etags''s FILESPEC argument.")
+  "*Initial prompt value for `xsl-etags''s FILESPEC argument.")
 
 (defvar xsl-filespec-history (list xsl-default-filespec)
   "Minibuffer history list for `xsl-etags' and `xsl-grep''s FILESPEC argument.")
@@ -121,6 +121,16 @@
 
 (defcustom xsl-initial-stylesheet-initial-point 0
   "*Initial position of point in initial stylesheet"
+  :type '(integer)
+  :group 'xsl)
+
+(defcustom xsl-initial-fo-file (locate-library "xslide-initial.fo" t)
+  "*File containing initial FO stylesheet inserted into empty XSL buffers"
+  :type '(choice (file :must-match t) (const :tag "No initial FO file" nil))
+  :group 'xsl)
+
+(defcustom xsl-initial-fo-initial-point 0
+  "*Initial position of point in initial FO stylesheet"
   :type '(integer)
   :group 'xsl)
 
@@ -995,8 +1005,6 @@ the prompts.
 ;;	      compilation-error-regexp-alist))
 
   (set-syntax-table xsl-mode-syntax-table)
-  (make-local-variable 'indent-line-function)
-  (setq indent-line-function 'xsl-electric-tab)
   ;; Maybe insert space characters when user hits "Tab" key
   (setq indent-tabs-mode xsl-indent-tabs-mode)
   (if (and
@@ -1014,7 +1022,7 @@ the prompts.
   (autoload 'reporter-submit-bug-report "reporter"))
 
 (defun xsl-submit-bug-report ()
-  "Submit via mail a bug report on XSLIDE."
+  "Submit via mail a bug report on 'xslide'."
   (interactive)
   (and (y-or-n-p "Do you really want to submit a report on XSL mode? ")
        (reporter-submit-bug-report
