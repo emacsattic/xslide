@@ -60,7 +60,6 @@
 (require 'xslide-abbrev "xslide-abbrev")
 (require 'xslide-font "xslide-font")
 (require 'xslide-process "xslide-process")
-(require 'xslide-indent "xslide-indent")
 
 ;; Work out if using XEmacs or Emacs
 ;; Inspired by 'vm'
@@ -125,7 +124,6 @@ limit is ignored here).")
 (defconst xsl-att-val-pair-regex
   (concat xsl-node-name-regex xsl-ows-regex "="
           xsl-ows-regex "\\(\"[^\"]*\"\\|\'[^\']*\'\\)")
-
   "Regular expression to match a single attribute-value pair.
 Includes white-space around the equals sign but not before and after
 the pair.  With care, this can be used to match single or double
@@ -144,6 +142,12 @@ test=\"(ItemType='TCMN')\".")
           xsl-ows-regex "/" xsl-ows-regex ">")
   "Regular expression to match a quick-close tag.")
 
+(defconst xsl-any-tag-regex
+  (concat "</?" xsl-node-name-regex
+          "\\(" xsl-ows-regex xsl-att-val-pair-regex "\\)*"
+          xsl-ows-regex "/?>")
+  "Regular expression to match any tag.")
+
 (defconst xsl-comment-start "<!--" "*Comment start string")
 
 (defconst xsl-comment-end "-->" "*Comment end string")
@@ -153,6 +157,11 @@ test=\"(ItemType='TCMN')\".")
 
 (defconst xsl-cdata-end "]]>"
   "CDATA end string.  This is NOT a regular expression!") 
+
+(require 'xslide-indent "xslide-indent")
+(require 'xslide-complete "xslide-complete")
+(require 'xslide-validate "xslide-validate")
+(require 'xslide-nodes "xslide-nodes")
 
 (defvar xsl-default-filespec "*.xsl"
   "*Initial prompt value for `xsl-etags''s FILESPEC argument.")
@@ -188,6 +197,7 @@ test=\"(ItemType='TCMN')\".")
   "*Initial position of point in initial FO stylesheet."
   :type '(integer)
   :group 'xsl)
+
 
 ; (defcustom xsl-indent-attributes nil
 ;   "*Whether to indent attributes on lines following an open tag.
@@ -262,21 +272,21 @@ lines above and below COMMENT in the manner of `xsl-big-comment'."
 (if xsl-mode-map
     ()
   (setq xsl-mode-map (make-sparse-keymap))
-  (define-key xsl-mode-map [tab]	  'xsl-electric-tab)
-  (define-key xsl-mode-map [(meta tab)]	  'xsl-complete)
-  (define-key xsl-mode-map "/"   	  'xsl-electric-slash)
-  (define-key xsl-mode-map "<"   	  'xsl-electric-less-than)
-  (define-key xsl-mode-map ">"            'xsl-electric-greater-than)
-  (define-key xsl-mode-map [(control c) (control c)]
-				   	  'xsl-comment)
-  (define-key xsl-mode-map [(control c) (control p)]
-				   	  'xsl-process)
-  (define-key xsl-mode-map [(control o)]
-				   	  'xsl-open-line)
-  (define-key xsl-mode-map "\C-c<"  	  'xsl-insert-tag)
-  (define-key xsl-mode-map "\C-c\C-t"     'xsl-if-to-choose)
-  (define-key xsl-mode-map "\C-m" 'xsl-electric-return)
-  (define-key xsl-mode-map "\177"	  'xsl-delete)
+  (define-key xsl-mode-map [tab]        'xsl-electric-tab)
+  (define-key xsl-mode-map [(meta tab)] 'xsl-complete)
+  (define-key xsl-mode-map " "          'xsl-electric-space)
+  (define-key xsl-mode-map "/"   	    'xsl-electric-slash)
+  (define-key xsl-mode-map "<"   	    'xsl-electric-less-than)
+  (define-key xsl-mode-map ">"          'xsl-electric-greater-than)
+  (define-key xsl-mode-map "\C-c\C-c"   'xsl-comment)
+  (define-key xsl-mode-map "\C-c\C-p"   'xsl-process)
+  (define-key xsl-mode-map "\C-o"       'xsl-open-line)
+  (define-key xsl-mode-map "\C-c<"      'xsl-insert-tag)
+  (define-key xsl-mode-map "\C-c\C-t"   'xsl-if-to-choose)
+  (define-key xsl-mode-map "\C-c\C-v"   'xsl-validate-buffer)
+  (define-key xsl-mode-map "\C-m"       'xsl-electric-return)
+  (define-key xsl-mode-map "\177"	    'xsl-delete)
+;  (define-key xsl-mode-map "\C-h\C-h"   'xsl-tag-info)
 )
 
 (defun xsl-if-to-choose ()
@@ -332,53 +342,6 @@ Bound to C-c C-t by default."
         (insert "</xsl:when>\n<xsl:otherwise></xsl:otherwise>\n</xsl:choose>")
         (indent-region start (point) nil))
     (message "xsl-if-to-choose error: point is not within the start tag of an <xsl:if>.")))
-
-(defun xsl-electric-greater-than (arg)
-  "Insert a \">\" and, optionally, insert a matching end-tag.
-
-If the \">\" closes a start-tag and the start-tag is the last thing on
-the line, `xsl-electric-greater-than' inserts the matching end-tag.
-Providing a prefix argument, e.g., \\[universal-argument] \\[xsl-electric-greater-than], stops the inserting of the
-matching end-tag.
-
-If the element being terminated is listed as a block element in
-`xsl-all-elements-alist', then point is left on the next line at the
-correct indent and the end-tag is inserted on the following line at
-the correct indent.
-
-`xsl-electric-greater-than' also fontifies the region around the
-current line."
-  (interactive "P")
-  (insert ">")
-  (if (and
-       (not arg)
-       (looking-at "$")
-       (save-excursion
-	 (let ((limit (point)))
-	   (backward-char)
-	   (search-backward "<")
-;;	   (message "%s:%s" (point) limit)
-	   (and
-	    (looking-at "<\\(\\(\\sw\\|\\s_\\)+\\)\\(\\s-+\\(\\sw\\|\\s_\\)+[ 	]*=[ 	]*\\('[^']*'\\|\"[^\"]*\"\\)\\)*\\s-*\\(/?\\)>")
-;;	    (message "%s:%s" limit (match-end 0))
-	    (= (match-end 0) limit)
-;;	    (message ":%s:" (match-string 6))
-	    (not (string-equal (match-string 6) "/"))
-	    (not (save-match-data
-		   (string-match "^/" (match-string 1))))))))
-      (if (string-equal (nth 1 (assoc (match-string 1) xsl-all-elements-alist)) "block")
-	  (progn
-	    (xsl-electric-return)
-	    (save-excursion
-	      (insert "\n<")
-	      (xsl-electric-slash)))
-	(save-excursion
-	  (insert (format "</%s>" (match-string 1))))))
-  (if font-lock-mode
-      (save-excursion
-	(font-lock-fontify-region
-	 (xsl-font-lock-region-point-min)
-	 (xsl-font-lock-region-point-max)))))
 
 (defun xsl-electric-less-than ()
   "Function called when \"<\" is pressed in XSL mode."
@@ -933,7 +896,7 @@ the prompts.
   (use-local-map xsl-mode-map)
   (setq mode-name "XSL")
   (setq major-mode 'xsl-mode)
-  (speedbar-add-supported-extension (list ".xsl" ".fo"))
+  (speedbar-add-supported-extension (list ".xsl" ".fo" ".html" ".xml" ".htm"))
   (setq local-abbrev-table xsl-mode-abbrev-table)
 
   (defadvice yank (around my-yank activate compile)
@@ -1105,7 +1068,6 @@ the prompts.
   "Submit via mail a bug report on 'xslide'."
   (interactive)
   (require 'reporter)
-  (require 'sendmail)
   (and (y-or-n-p "Do you really want to submit a report on XSL mode? ")
        (reporter-submit-bug-report
 	xslide-maintainer-address
@@ -1119,6 +1081,12 @@ the prompts.
      "Please change the Subject header to a concise bug description.\nRemember to cover the basics, that is, what you expected to\nhappen and what in fact did happen.  Please remove these\ninstructions from your message.")
     (save-excursion
       (goto-char (point-min))
+;      ; XEmacs users may not have this function, so define it just to
+;      ; avoid compilation errors.
+;      (eval-and-compile
+;        (if (not (functionp 'mail-position-on-field))
+;            (defun mail-position-on-field (arg)
+;              (message "Cannot send mail: lisp function mail-position-on-field is undefined"))))
       (mail-position-on-field "Subject")
       (beginning-of-line)
       (delete-region (point) (progn (forward-line) (point)))
@@ -1131,7 +1099,8 @@ the prompts.
 ;;;; Last provisions
 ;;;(provide 'xslide)
 
+;;; xslide.el ends here
+  (require 'sendmail)
+
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.\\(?:xsl\\|fo\\)$" . xsl-mode))
-
-;;; xslide.el ends here

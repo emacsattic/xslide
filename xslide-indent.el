@@ -28,6 +28,7 @@
 ;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 (provide 'xslide-indent)
+(require 'xslide "xslide")
 
 (defcustom xsl-tab-width 2
   "Sets the indentation step size on entering xsl-mode.
@@ -91,6 +92,24 @@ tab-stop-list will be ignored."
                  (const :tag "Tabs" t))
   :group 'xsl)
 
+(defconst xsl-comment-backsearch-limit 50000
+
+  "How many characters back to search when indenting to see if we are
+in a comment, cdata, xsl:text section, or tag.  Set this very high,
+then ratchet it down until you get the performance you want.  50K
+seems pretty good on a 2GHz Pentium Windows machine.  Test by using
+indent-region on about 500 lines near the end of files over 1 meg.")
+
+(defconst xsl-invasive-comment-backsearch-limit 500
+
+  "This overrides `xsl-comment-backsearch-limit' in the
+xsl-invasive-indent function for better performance on massive
+indentation requests.  Testing on a 2GHz Pentium Windows machine, 500
+seemed fast enough that this was no longer the primary limit on
+performance.  Setting this lower than the maximum length of a comment
+in a file you invasively-indent will cause the indentation to break.
+Setting it too high will make the indentation very slow.")
+
 (defun xsl-delete ()
   "Function called when <delete> is pressed in XSL mode."
   (interactive)
@@ -141,7 +160,7 @@ tab-stop-list will be ignored."
   ; start tag but not an end before the point, we're in one.
   (let ( (pnt (point)) )
     (save-excursion
-      (if (search-backward "<" nil t)
+      (if (search-backward "<" (- pnt xsl-comment-backsearch-limit) t)
           (not (search-forward ">" pnt t))))))
 
 (defun xsl-is-in-text ()
@@ -157,7 +176,7 @@ tab-stop-list will be ignored."
   ; before the point, we're in one.
   (let ( (pnt (point)) )
     (save-excursion
-      (if (search-backward "<xsl:text" nil t)
+      (if (search-backward "<xsl:text" (- pnt xsl-comment-backsearch-limit) t)
           (not (search-forward "</xsl:text>" pnt t))))))
 
 (defun xsl-is-in-comment ()
@@ -167,7 +186,7 @@ tab-stop-list will be ignored."
   ; start Comment but not an end before the point, we're in one.
   (let ( (pnt (point)) )
     (save-excursion
-      (if (search-backward xsl-comment-start nil t)
+      (if (search-backward xsl-comment-start (- pnt xsl-comment-backsearch-limit) t)
           (not (search-forward xsl-comment-end pnt t))))))
 
 (defun xsl-is-in-cdata ()
@@ -177,8 +196,8 @@ tab-stop-list will be ignored."
   ; start CDATA but not an end before the point, we're in one.
   (let ( (pnt (point)) )
     (save-excursion
-      (if (search-backward xsl-cdata-start nil t)
-          (not (search-forward xsl-cdata-end pnt t))))))
+      (if (search-backward xsl-cdata-start (- pnt xsl-comment-backsearch-limit) t)
+         (not (search-forward xsl-cdata-end pnt t))))))
 
 (defun xsl-indent-line ()
   "Indents each line when tab is NOT pressed manually in XSL mode."
@@ -226,83 +245,190 @@ tab-stop-list will be ignored."
 (defun xsl-invasive-indent ()
   "Indents a whole file invasively.  Use with XML but not HTML!"
   (interactive)
-  (beginning-of-buffer)
-  (replace-regexp ">[ \t\n]*<" ">\n<")
-  (beginning-of-buffer)
-  (while (not (eobp))
-    (indent-to (xsl-calculate-indent))
-;    (xsl-indent-line)
-    (end-of-line)
-    (forward-char 1)))
+  (let ( (prev-font-lock font-lock-mode)
+         (xsl-start-tag-regex (concat "<" xsl-node-name-regex
+                                      "\\(" xsl-ows-regex xsl-att-val-pair-regex "\\)*"
+                                      xsl-ows-regex ">")) )
+    (turn-off-font-lock)
+    (beginning-of-buffer)
+
+    ; This is really fast - faster than (replace-regexp ">[ \t\n]*<" ">\n<")
+    (while (re-search-forward ">[ \t]*<" nil t)
+      (backward-char 1)
+      (insert "\n"))
+
+    ; This is slower but not as slow
+    ; as (replace-regexp "<\\([^/>]+\\)>[ \t\n]*</[^/>]+>" "<\\1 />")
+
+    ; In understanding the following code, it is important to note
+    ; that due to XML nesting rules, if an open tag is followed by a
+    ; close tag, they must be the same tag.  Here we will turn them
+    ; into a quick-close so that the following operation (the slowest)
+    ; has less to process.
+    (beginning-of-buffer)
+    (while (re-search-forward xsl-start-tag-regex nil t)
+      (if (looking-at "[ \t\n]*</")
+          (let ( (pt (point)) )
+            (search-forward ">")
+            (delete-region (- pt 1) (point))
+            (insert " />"))))
+
+
+
+    ; This is the slowest.  Indent each line according to the usual rules.
+    (beginning-of-buffer)
+    (let
+        ( (tmp-backsearch-max xsl-comment-backsearch-limit) )
+      (setq xsl-comment-backsearch-limit xsl-invasive-comment-backsearch-limit)
+      (while (not (eobp))
+        (indent-to (xsl-calculate-indent nil))
+        (end-of-line)
+        (forward-char 1))
+      (setq xsl-comment-backsearch-limit tmp-backsearch-max))
+
+    (if prev-font-lock
+        (turn-on-font-lock)
+      t)))
+
+; Let's examine the possibilities here in terms of two tags on separate lines:
+;Indent -1:
+;   <x />
+;</x>
+;   ---
+;   </x>
+;</x>
+;
+;Indent +1:
+;   <x>
+;      <x>
+;   ---
+;   <x>
+;      <x />
+;
+;Indent +0:
+;   ---
+;   <x>
+;   </x>
+;(the last case is only legal if the nodes are the same)
+;   <x />
+;   <x>
+;   ---
+;   <x />
+;   <x />
+;   ---
+;   </x>
+;   <x>
+;   ---
+;   </x>
+;   <x />
+(defconst xsl-quick-close-no-lt-regex
+  (concat xsl-node-name-regex
+          "\\(" xsl-ows-regex xsl-att-val-pair-regex "\\)*"
+          xsl-ows-regex "/" xsl-ows-regex ">")
+  "Regular expression to match a quick-close tag without the leading <.")
+
+(defconst xsl-normal-tag-start-line-regex (concat "^[ \t]*</?"
+                                                  xsl-node-name-prefix-regex)
+  "Short regular Expression to match a line that starts with
+whitespace and the start of a tag")
+
 
 (defun xsl-calculate-indent (&optional already-in-comment)
   "Calculate what the indent should be for the current line."
   ; if at beginning of buffer, indentation is zero
-  (cond ((bobp) 0)
-        ((save-excursion
-           ; go to beginning of this line
-           (re-search-backward "^" nil t)
-           ; Calculate indent up-to point
-           (let* ( (xsl-end-calc-indent-area (point))
-                   ; Are we currently looking at an end tag?
-                   (xsl-curr-end-tag (looking-at "^[ \t]*</"))
-                   ; counter for later
-                   (xsl-count-open-tags 0)
-                   ; does the "good line" we base our indentation on
-                   ; start with an end tag?
-                   (xsl-good-line-is-end-tag nil)
-                   ; What column is our good line indented to?
-                   (xsl-good-line-indent-col 0)
-                   (xsl-normal-tag-start-line-regex
-                    (concat "^[ \t]*</?" xsl-node-name-prefix-regex)))
-             ; Find a line that starts with a good tag (not a special
-             ; ! or ? tag) We will calculate our indent based on this.
-             (re-search-backward xsl-normal-tag-start-line-regex nil t)
-             (if (not already-in-comment)
-                 (while (or (xsl-is-in-comment) (xsl-is-in-cdata))
-                   (re-search-backward xsl-normal-tag-start-line-regex nil t)))
-             ; do we need this line?
-             (re-search-backward "^" nil t)
-             ; Remember if our anchor line is a start or end tag
-             (setq xsl-good-line-is-end-tag (looking-at "[ \t]*</"))
-             ; Remember indentation of our anchor line
-             (setq xsl-good-line-indent-col
-                   (1-
-                    (save-excursion
-                      (search-forward "<" nil t)
-                      (current-column))))
-             ; count open tags between our anchor and our starting point.
-             (save-excursion
-               (while (re-search-forward (concat "<" xsl-node-name-prefix-regex)
-                                         xsl-end-calc-indent-area t)
-                 (if (and (or (xsl-is-in-comment) (xsl-is-in-cdata))
-                          (not already-in-comment))
-                     nil
-                   (setq xsl-count-open-tags (1+ xsl-count-open-tags)))))
-             ; Now count close tags and subtract them from the open tag count
-             (save-excursion
-               (while (search-forward "</" xsl-end-calc-indent-area t)
-                 (if (and (or (xsl-is-in-comment) (xsl-is-in-cdata))
-                          (not already-in-comment))
-                     nil
-                   (setq xsl-count-open-tags (1- xsl-count-open-tags)))))
-             ; Now count quick-close tags and subtract them from the open tag count
-             (save-excursion
-               (while (search-forward "/>" xsl-end-calc-indent-area t)
-                 (if (and (or (xsl-is-in-comment) (xsl-is-in-cdata))
-                          (not already-in-comment))
-                     nil
-                   (setq xsl-count-open-tags (1- xsl-count-open-tags)))))
-             ; Don't un-indent twice if good line starts with </
-             (if xsl-good-line-is-end-tag
-                 (setq xsl-count-open-tags (1+ xsl-count-open-tags)))
-             ; Un-indent one more if current line starts with </
-             (if xsl-curr-end-tag
-                 (setq xsl-count-open-tags (1- xsl-count-open-tags)))
-             ; Calculate indent based on information we have collected
-             ; if it's an end tag, we indent one less.
-;            (message "Indent level: %d" xsl-count-open-tags)
-             (+ xsl-good-line-indent-col
-                (* xsl-count-open-tags xsl-tab-width)))))))
+  (cond ( (bobp) 0 )
+        ( t
+          (save-excursion
+            ; go to beginning of this line
+            (beginning-of-line)
+            ; Calculate indent up-to point
+            (let* ( (xsl-end-calc-indent-area (point))
+                    ; Are we currently looking at an end tag?
+                    (xsl-curr-end-tag (looking-at "[ \t]*</"))
+                    ; counter for later
+                    (xsl-count-open-tags 0)
+                    ; does the "good line" we base our indentation on
+                    ; start with an end tag?
+                    (xsl-good-line-is-end-tag nil)
+                    ; What column is our good line indented to?
+                    (xsl-good-line-indent-col 0)
+                    )
+              ; Find a line that starts with a good tag (not a special
+              ; ! or ? tag) We will calculate our indent based on this.
+              (re-search-backward xsl-normal-tag-start-line-regex nil t)
+              (if (not already-in-comment)
+                  (while (cond ( (looking-at "</xsl:text>")
+                                 (re-search-backward xsl-normal-tag-start-line-regex nil t)
+                                 t )
+                               ( (xsl-is-in-comment)
+                                 (search-backward xsl-comment-start)
+                                 (re-search-backward xsl-normal-tag-start-line-regex nil t)
+                                 t )
+                               ( (xsl-is-in-cdata)
+                                 (search-backward xsl-cdata-start)
+                                 (re-search-backward xsl-normal-tag-start-line-regex nil t)
+                                 t ))))
+              ; do we need this line?
+ ;             (re-search-backward "^" nil t)
+              (beginning-of-line)
+              ; Remember if our anchor line is a start or end tag
+              (setq xsl-good-line-is-end-tag (looking-at "[ \t]*</"))
+              (search-forward "<" xsl-end-calc-indent-area t)
+              ; Remember indentation of our anchor line
+              (setq xsl-good-line-indent-col
+                    (1- (current-column)))
+              (backward-char 1)
+              ; count open tags between our anchor and our starting point.
+              (while (search-forward "<" xsl-end-calc-indent-area t)
+                      ; Just indent same as previous line in comments or cdata
+                (cond ( (and (or (xsl-is-in-comment) (xsl-is-in-cdata))
+                             (not already-in-comment))
+                        (message "indent in comment") )
+                      ; end-tag
+                      ( (char-equal (char-after) ?/)
+                        (setq xsl-count-open-tags (1- xsl-count-open-tags)))
+                      ; comment, CDATA, or DOCTYPE - do nothing
+                      ( (char-equal (char-after)  ?!) )
+                      ; xml declaration - do nothing
+                      ( (char-equal (char-after)  ??) )
+                      ; quick-close - do nothing
+                      ( (looking-at xsl-quick-close-no-lt-regex) )
+                      ; must be an open tag
+                      ( t
+                        (setq xsl-count-open-tags (1+ xsl-count-open-tags)))))
 
+;             ; count open tags between our anchor and our starting point.
+;             (save-excursion
+;               (while (re-search-forward (concat "<" xsl-node-name-prefix-regex)
+;                                         xsl-end-calc-indent-area t)
+;                 (if (and (or (xsl-is-in-comment) (xsl-is-in-cdata))
+;                          (not already-in-comment))
+;                     nil
+;                   (setq xsl-count-open-tags (1+ xsl-count-open-tags)))))
+;             ; Now count close tags and subtract them from the open tag count
+;             (save-excursion
+;               (while (search-forward "</" xsl-end-calc-indent-area t)
+;                 (if (and (or (xsl-is-in-comment) (xsl-is-in-cdata))
+;                          (not already-in-comment))
+;                     nil
+;                   (setq xsl-count-open-tags (1- xsl-count-open-tags)))))
+;             ; Now count quick-close tags and subtract them from the open tag count
+;             (save-excursion
+;               (while (search-forward "/>" xsl-end-calc-indent-area t)
+;                 (if (and (or (xsl-is-in-comment) (xsl-is-in-cdata))
+;                          (not already-in-comment))
+;                     nil
+;                   (setq xsl-count-open-tags (1- xsl-count-open-tags)))))
+
+              ; Don't un-indent twice if good line starts with </
+              (if xsl-good-line-is-end-tag
+                  (setq xsl-count-open-tags (1+ xsl-count-open-tags)))
+              ; Un-indent one more if current line starts with </
+              (if xsl-curr-end-tag
+                  (setq xsl-count-open-tags (1- xsl-count-open-tags)))
+              ; Calculate indent based on information we have collected
+              ; if it's an end tag, we indent one less.
+;             (message "Indent level: %d" xsl-count-open-tags)
+              (+ xsl-good-line-indent-col
+                 (* xsl-count-open-tags xsl-tab-width)))))))
 ;; end of xslide-indent.el
