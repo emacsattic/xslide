@@ -48,16 +48,6 @@
 (require 'font-lock)
 ;; XEmacs users don't always have imenu.el installed, so use
 ;; condition-case to cope if xslide causes an error by requiring imenu.
-
-(defconst xsl-xemacs-p nil)
-(defconst xsl-fsfemacs-p nil)
-(defun xsl-xemacs-p () xsl-xemacs-p)
-(defun xsl-fsfemacs-p () xsl-fsfemacs-p)
-(defun xsl-note-emacs-version ()
-  (setq xsl-xemacs-p (string-match "XEmacs" emacs-version)
-	xsl-fsfemacs-p (not xsl-xemacs-p)))
-(xsl-note-emacs-version)
-
 (eval-and-compile
   (condition-case nil
 	(require 'imenu)
@@ -69,6 +59,17 @@
 (require 'xslide-abbrev "xslide-abbrev")
 (require 'xslide-font "xslide-font")
 (require 'xslide-process "xslide-process")
+
+;; Work out if using XEmacs or Emacs
+;; Inspired by 'vm'
+(defconst xsl-xemacs-p nil)
+(defconst xsl-fsfemacs-p nil)
+(defun xsl-xemacs-p () xsl-xemacs-p)
+(defun xsl-fsfemacs-p () xsl-fsfemacs-p)
+(defun xsl-note-emacs-version ()
+  (setq xsl-xemacs-p (string-match "XEmacs" emacs-version)
+	xsl-fsfemacs-p (not xsl-xemacs-p)))
+(xsl-note-emacs-version)
 
 ;; Define core `xsl' group.
 (defgroup xsl nil
@@ -1108,9 +1109,6 @@ the prompts.
 
 
 ;;;; Bug reporting
-
-(eval-and-compile
-  (autoload 'reporter-submit-bug-report "reporter"))
 
 (defun xsl-submit-bug-report ()
   "Submit via mail a bug report on 'xslide'."
