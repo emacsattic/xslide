@@ -1,3 +1,8 @@
+2003-08-03  Tony Graham  <tonygraham@users.sourceforge.net>
+
+	* README.TXT: Reworked byte-compiling instructions, added note to
+	ignore errors.
+
 2003-07-18  Tony Graham  <tonygraham@users.sourceforge.net>
 
 	* dot_emacs: Added commented-out autoloads of `xsl-grep' and
