@@ -1,5 +1,5 @@
 This package contains an Emacs major mode for editing XSL stylesheets.
-The current revision is 0.2.2, dated 4 August 2003.
+The current revision is 0.2.2+, dated 4 August 2003.
 
 The xslide home page is http://www.menteith.com/xslide/
 
@@ -25,6 +25,7 @@ xslide-data.el          Data about XSL elements and formatting objects
 xslide-font.el          Font lock keywords for XSL stylesheets
 xslide-initial.xsl      Default initial stylesheet inserted in empty buffers
 xslide-process.el       Procedures for processing XSL stylesheets
+xslt2-initial.xsl	Default XSLT 2.0 stylesheet inserted in empty buffers
 
 Note that make-regexp.el, which was used by earlier version of xslide,
 is not required by xslide 0.2 or later.
