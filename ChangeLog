@@ -1,3 +1,57 @@
+2005-12-11  Tony Graham  <menteith@users.sourceforge.net>
+
+	* README.TXT: Added 'xslt2-initial.xsl' to list of files.
+
+	* xslt2-initial.xsl: XSLT 2.0 initial stylesheet (Dave Pawson)
+
+2004-12-11  Glen Peterson <glenpeterson@users.sourceforge.net>
+
+	* xslide-indent.el: Fixed script tag indentation bug again.
+
+2004-12-05  Glen Peterson <glenpeterson@users.sourceforge.net>
+
+	* xslide-complete.el, xslide-font.el, xslide-indent.el,
+	xslide-validate.el: Continued generalizing font-lock to work for
+	jsp.  Fixed bug where <script> tags in comments would break
+	indentation.  Fixed other minor bugs.
+
+2004-07-24  Glen Peterson <glenpeterson@users.sourceforge.net>
+
+	* xslide-complete.el: Completed first pass at JSP tag completion.
+
+2004-07-23  Glen Peterson <glenpeterson@users.sourceforge.net>
+
+	* xslide-indent.el: Fixed indentation
+
+2004-07-22  Glen Peterson <glenpeterson@users.sourceforge.net>
+
+	* auto-autoloads.el, xslide-complete.el, xslide-font.el,
+	xslide-indent.el, xslide-validate.el, xslide.el: A years worth of
+	change: added JSP support, might have broken indentation for line
+	after a script tag
+
+2003-12-02  Glen Peterson <glenpeterson@users.sourceforge.net>
+
+	* _pkg.el, auto-autoloads.el, custom-load.el, xslide-complete.el,
+	xslide-html-format.el, xslide-nodes.el, xslide-validate.el: New
+	file.
+
+	* _pkg.el, auto-autoloads.el, custom-load.el, xslide-complete.el,
+	xslide-html-format.el, xslide-nodes.el, xslide-validate.el: New
+	files created mostly by breaking up xslide.el into smaller chunks
+	by function.  xslide-complete is for my expiraments about
+	auto-completion.  xslide-html-format is some experimental
+	functions for modifying xsl or xml code to display nicely (and in
+	color) in HTML.  Use this when you want to put sample xml or xsl
+	code in a web page.  xslide-nodes.el is more of my experiaments
+	for auto-completion -currently only used for xsl-tag-info.
+	xslide-validate helps spot errors in your xsl.  It could really
+	use nesting checking and basic xml validation, but it finds some
+	really tricky errors that other validators seem to miss.
+
+	* xslide-indent.el, xslide.el: Massive updates to clean-up and for
+	efficiencies.
+
 2003-11-08  Tony Graham  <tonygraham@users.sourceforge.net>
 
 	* xslide.el: Require 'sendmail so can remove test for
